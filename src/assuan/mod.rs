@@ -33,6 +33,7 @@ impl std::fmt::Display for ParseErr {
 #[derive(Debug, PartialEq)]
 enum Command {
     Ok,
+    Quit,
     SetTitle(String),
     Comment(String),
     //
@@ -80,6 +81,7 @@ impl TryFrom<String> for Command {
                 Ok(Command::SetTimeOut(d))
             }
             "OK" => Ok(Command::Ok),
+            "QUIT" => Ok(Command::Quit),
             "SETTITLE" => Ok(Command::SetTitle(remainder.to_owned())),
             "SETDESC" => Ok(Command::SetDesc(remainder.to_owned())),
             "SETPROMPT" => Ok(Command::SetPrompt(remainder.to_owned())),
@@ -375,6 +377,11 @@ mod test {
             Command::SetKeyInfo("hello".to_string()),
             Command::try_from("SETKEYINFO hello").unwrap()
         )
+    }
+
+    #[test]
+    fn parse_quit() {
+        assert_eq!(Command::Quit, Command::try_from("QUIT").unwrap())
     }
 
     #[test]
