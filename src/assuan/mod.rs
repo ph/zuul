@@ -48,6 +48,7 @@ enum Command {
     SetQualityBarTT(String),
     Option(OptionArgs),
     SetGenPin,
+    SetGenPinTT(String),
 }
 
 impl TryFrom<String> for Command {
@@ -87,8 +88,9 @@ impl TryFrom<String> for Command {
             "SETERROR" => Ok(Command::SetError(remainder.to_owned())),
             "SETREPEAT" => Ok(Command::SetRepeat),
             "SETQUALITYBAR" => Ok(Command::SetQualityBar),
-            "SETGENPIN" => Ok(Command::SetGenPin),
             "SETQUALITYBAR_TT" => Ok(Command::SetQualityBarTT(remainder.to_owned())),
+            "SETGENPIN" => Ok(Command::SetGenPin),
+            "SETGENPIN_TT" => Ok(Command::SetGenPinTT(remainder.to_owned())),
             "OPTION" => Ok(Command::Option(OptionArgs::try_from(remainder)?)),
             _ => Err(ParseErr::UnknownCommand(value)),
         }
@@ -243,6 +245,14 @@ mod test {
     }
 
     #[test]
+    fn parse_set_quality_bar_tt() {
+        assert_eq!(
+            Command::SetQualityBarTT("Hello".to_string()),
+            Command::try_from("SETQUALITYBAR_TT Hello").unwrap()
+        )
+    }
+
+    #[test]
     fn parse_option_constraints_enforce() {
         assert_eq!(
             Command::Option(OptionArgs::ConstraintsEnforce),
@@ -269,5 +279,13 @@ mod test {
     #[test]
     fn parse_set_set_gen_pin() {
         assert_eq!(Command::SetGenPin, Command::try_from("SETGENPIN").unwrap())
+    }
+
+    #[test]
+    fn parse_set_set_gen_pin_tt() {
+        assert_eq!(
+            Command::SetGenPinTT("Hello".to_string()),
+            Command::try_from("SETGENPIN_TT Hello").unwrap()
+        )
     }
 }
