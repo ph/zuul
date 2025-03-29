@@ -116,6 +116,9 @@ enum OptionArgs {
     TtyName(String),
     TtyType(String),
     LcCType(String),
+    DefaultOk(String),
+    DefaultCancel(String),
+    DefaultPrompt(String),
 }
 
 impl TryFrom<&str> for OptionArgs {
@@ -138,6 +141,9 @@ impl TryFrom<&str> for OptionArgs {
             ("ttyname", _) => Ok(TtyName(args.to_owned())),
             ("ttytype", _) => Ok(TtyType(args.to_owned())),
             ("lc-ctype", _) => Ok(LcCType(args.to_owned())),
+            ("default-ok", _) => Ok(DefaultOk(args.to_owned())),
+            ("default-cancel", _) => Ok(DefaultCancel(args.to_owned())),
+            ("default-prompt", _) => Ok(DefaultPrompt(args.to_owned())),
             (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),
         }
     }
@@ -324,6 +330,30 @@ mod test {
         assert_eq!(
             Command::Option(OptionArgs::LcCType("hello".to_string())),
             Command::try_from("OPTION lc-ctype=hello").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_ok() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultOk("Okay".to_string())),
+            Command::try_from("OPTION default-ok=Okay").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_cancel() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultCancel("Okay".to_string())),
+            Command::try_from("OPTION default-cancel=Okay").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_prompt() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultPrompt("Okay".to_string())),
+            Command::try_from("OPTION default-prompt=Okay").unwrap()
         )
     }
 
