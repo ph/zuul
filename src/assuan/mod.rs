@@ -3,7 +3,7 @@ use std::time::Duration;
 const LINE_LIMITS: usize = 1000;
 
 #[derive(Debug, PartialEq)]
-enum ParseErr {
+pub enum ParseErr {
     UnknownCommand(String),
     StringTooLong(usize),
     Empty,
@@ -31,13 +31,24 @@ impl std::fmt::Display for ParseErr {
 }
 
 #[derive(Debug, PartialEq)]
-enum Command {
+pub enum ClientResponse {
     Ok,
     Quit,
     Reset,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Command {
+    // Not sure if this is worth it
+    Ok,
+    Quit,
+    Reset,
+    // show dialog
+    // Config, 	// Ask for confirmation
+    // Message, // Show a message
+    GetPin, // Show dialog Ask the user for a PIN or passphrase
     SetTitle(String),
     Comment(String),
-    //
     SetTimeOut(Duration),
     SetPrompt(String),
     SetDesc(String),
@@ -82,6 +93,7 @@ impl TryFrom<String> for Command {
                 Ok(Command::SetTimeOut(d))
             }
             "OK" => Ok(Command::Ok),
+            "GETPIN" => Ok(Command::GetPin),
             "QUIT" => Ok(Command::Quit),
             "RESET" => Ok(Command::Reset),
             "SETTITLE" => Ok(Command::SetTitle(remainder.to_owned())),
@@ -112,7 +124,7 @@ impl TryFrom<&str> for Command {
 }
 
 #[derive(Debug, PartialEq)]
-enum OptionArgs {
+pub enum OptionArgs {
     ConstraintsEnforce,
     ConstraintsHintShort(String),
     ConstraintsHintLong(String),
@@ -371,6 +383,11 @@ mod test {
             Command::Option(OptionArgs::AllowExternalPasswordCache),
             Command::try_from("OPTION allow-external-password-cache").unwrap()
         )
+    }
+
+    #[test]
+    fn parse_getpin() {
+        assert_eq!(Command::GetPin, Command::try_from("GETPIN").unwrap())
     }
 
     #[test]
