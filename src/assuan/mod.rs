@@ -49,6 +49,7 @@ enum Command {
     Option(OptionArgs),
     SetGenPin,
     SetGenPinTT(String),
+    SetKeyInfo(String),
 }
 
 impl TryFrom<String> for Command {
@@ -92,6 +93,7 @@ impl TryFrom<String> for Command {
             "SETGENPIN" => Ok(Command::SetGenPin),
             "SETGENPIN_TT" => Ok(Command::SetGenPinTT(remainder.to_owned())),
             "OPTION" => Ok(Command::Option(OptionArgs::try_from(remainder)?)),
+            "SETKEYINFO" => Ok(Command::SetKeyInfo(remainder.to_owned())),
             _ => Err(ParseErr::UnknownCommand(value)),
         }
     }
@@ -364,6 +366,14 @@ mod test {
         assert_eq!(
             Command::Option(OptionArgs::AllowExternalPasswordCache),
             Command::try_from("OPTION allow-external-password-cache").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_set_key_info() {
+        assert_eq!(
+            Command::SetKeyInfo("hello".to_string()),
+            Command::try_from("SETKEYINFO hello").unwrap()
         )
     }
 
