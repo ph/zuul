@@ -37,6 +37,7 @@ enum Command {
     SetTimeOut(Duration),
     SetPrompt(String),
     SetDesc(String),
+    SetOk(String),
 }
 
 impl TryFrom<String> for Command {
@@ -70,6 +71,7 @@ impl TryFrom<String> for Command {
             "SETTITLE" => Ok(Command::SetTitle(remainder.to_owned())),
             "SETDESC" => Ok(Command::SetDesc(remainder.to_owned())),
             "SETPROMPT" => Ok(Command::SetPrompt(remainder.to_owned())),
+            "SETOK" => Ok(Command::SetOk(remainder.to_owned())),
             _ => Err(ParseErr::UnknownCommand(value)),
         }
     }
@@ -148,6 +150,14 @@ mod test {
         assert_eq!(
             Command::SetDesc("hello".to_string()),
             Command::try_from("SETDESC hello").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_set_ok() {
+        assert_eq!(
+            Command::SetOk("hello".to_string()),
+            Command::try_from("SETOK hello").unwrap()
         )
     }
 }
