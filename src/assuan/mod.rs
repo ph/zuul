@@ -42,6 +42,7 @@ enum Command {
     SetNotOk(String),
     SetError(String),
     SetRepeat,
+    SetQualityBar,
 }
 
 impl TryFrom<String> for Command {
@@ -80,6 +81,7 @@ impl TryFrom<String> for Command {
             "SETNOTOK" => Ok(Command::SetNotOk(remainder.to_owned())),
             "SETERROR" => Ok(Command::SetError(remainder.to_owned())),
             "SETREPEAT" => Ok(Command::SetRepeat),
+            "SETQUALITYBAR" => Ok(Command::SetQualityBar),
             _ => Err(ParseErr::UnknownCommand(value)),
         }
     }
@@ -195,5 +197,13 @@ mod test {
     #[test]
     fn parse_set_repeat() {
         assert_eq!(Command::SetRepeat, Command::try_from("SETREPEAT").unwrap())
+    }
+
+    #[test]
+    fn parse_set_quality_bar() {
+        assert_eq!(
+            Command::SetQualityBar,
+            Command::try_from("SETQUALITYBAR").unwrap()
+        )
     }
 }
