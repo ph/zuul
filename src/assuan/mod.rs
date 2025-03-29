@@ -28,6 +28,7 @@ impl std::fmt::Display for ParseErr {
 enum Command {
     Ok,
     SetTitle(String),
+    Comment(String),
 }
 
 impl TryFrom<String> for Command {
@@ -48,8 +49,9 @@ impl TryFrom<String> for Command {
         };
 
         match c {
+            "#" => Ok(Command::Comment(remainder.to_owned())),
             "OK" => Ok(Command::Ok),
-            "SETTITLE" => Ok(Command::SetTitle(remainder.to_string())),
+            "SETTITLE" => Ok(Command::SetTitle(remainder.to_owned())),
             _ => Err(ParseErr::UnknownCommand(value)),
         }
     }
@@ -84,6 +86,14 @@ mod test {
         let size = LINE_LIMITS + 1;
         let s = random_string(size);
         assert_eq!(Err(ParseErr::StringTooLong(size)), Command::try_from(s));
+    }
+
+    #[test]
+    fn parse_comment() {
+        assert_eq!(
+            Command::Comment("Hello la famille".to_string()),
+            Command::try_from("# Hello la famille").unwrap()
+        );
     }
 
     #[test]
