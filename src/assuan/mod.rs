@@ -119,6 +119,7 @@ enum OptionArgs {
     DefaultOk(String),
     DefaultCancel(String),
     DefaultPrompt(String),
+    AllowExternalPasswordCache,
 }
 
 impl TryFrom<&str> for OptionArgs {
@@ -136,7 +137,7 @@ impl TryFrom<&str> for OptionArgs {
             ("constraints-enforce", "") => Ok(ConstraintsEnforce),
             ("constraints-hint-short", _) => Ok(ConstraintsHintShort(args.to_owned())),
             ("constraints-hint-long", _) => Ok(ConstraintsHintLong(args.to_owned())),
-            ("formatted-passphrase", _) => Ok(FormattedPassphrase),
+            ("formatted-passphrase", "") => Ok(FormattedPassphrase),
             ("formatted-passphrase-hint", _) => Ok(FormattedPassphraseHint(args.to_owned())),
             ("ttyname", _) => Ok(TtyName(args.to_owned())),
             ("ttytype", _) => Ok(TtyType(args.to_owned())),
@@ -144,6 +145,7 @@ impl TryFrom<&str> for OptionArgs {
             ("default-ok", _) => Ok(DefaultOk(args.to_owned())),
             ("default-cancel", _) => Ok(DefaultCancel(args.to_owned())),
             ("default-prompt", _) => Ok(DefaultPrompt(args.to_owned())),
+            ("allow-external-password-cache", "") => Ok(AllowExternalPasswordCache),
             (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),
         }
     }
@@ -354,6 +356,14 @@ mod test {
         assert_eq!(
             Command::Option(OptionArgs::DefaultPrompt("Okay".to_string())),
             Command::try_from("OPTION default-prompt=Okay").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_allow_external_password_cache() {
+        assert_eq!(
+            Command::Option(OptionArgs::AllowExternalPasswordCache),
+            Command::try_from("OPTION allow-external-password-cache").unwrap()
         )
     }
 
