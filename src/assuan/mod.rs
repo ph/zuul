@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 const LINE_LIMITS: usize = 1000;
 
 #[derive(Debug, PartialEq)]
@@ -5,6 +7,7 @@ enum ParseErr {
     UnknownCommand(String),
     StringTooLong(usize),
     Empty,
+    InvalidDuration(String),
 }
 
 impl std::error::Error for ParseErr {}
@@ -20,6 +23,7 @@ impl std::fmt::Display for ParseErr {
                 LINE_LIMITS, l
             ),
             Empty => write!(f, "empty string"),
+            InvalidDuration(s) => write!(f, "invalid duration, error converting `{}`", s),
         }
     }
 }
@@ -29,6 +33,8 @@ enum Command {
     Ok,
     SetTitle(String),
     Comment(String),
+    //
+    SetTimeOut(Duration),
 }
 
 impl TryFrom<String> for Command {
@@ -50,6 +56,14 @@ impl TryFrom<String> for Command {
 
         match c {
             "#" => Ok(Command::Comment(remainder.to_owned())),
+            "SETTIMEOUT" => {
+                let d = Duration::from_secs(
+                    remainder
+                        .parse::<u64>()
+                        .map_err(|_| ParseErr::InvalidDuration(remainder.to_owned()))?,
+                );
+                Ok(Command::SetTimeOut(d))
+            }
             "OK" => Ok(Command::Ok),
             "SETTITLE" => Ok(Command::SetTitle(remainder.to_owned())),
             _ => Err(ParseErr::UnknownCommand(value)),
@@ -106,6 +120,14 @@ mod test {
         assert_eq!(
             Command::SetTitle("hello".to_string()),
             Command::try_from("SETTITLE hello").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_set_timeout() {
+        assert_eq!(
+            Command::SetTimeOut(Duration::from_secs(20)),
+            Command::try_from("SETTIMEOUT 20").unwrap()
         )
     }
 }
