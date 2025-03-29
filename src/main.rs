@@ -1,7 +1,8 @@
 use assuan::Command;
 use iced::{
-    widget::{button, column, row, text, text_input},
-    Element, Task,
+    widget::{button, column, container, row, text, text_input},
+    Alignment::Center,
+    Element, Padding, Task,
 };
 
 mod assuan;
@@ -114,18 +115,22 @@ impl Application {
             Command::GetPin,
         ]);
 
-        column![
-            row![
-                text(f.prompt),
+        container(row![
+            text(f.prompt),
+            column![
                 text_input("", &self.passphrase)
                     .on_input(Message::PassphraseChanged)
                     .secure(true),
-            ],
-            row!(
-                button(text(f.button_cancel)).on_press(Message::ButtonCancelPressed),
-                button(text(f.button_ok)).on_press(Message::ButtonOkPressed)
-            )
-        ]
+                row![
+                    button(text(f.button_cancel)).on_press(Message::ButtonCancelPressed),
+                    button(text(f.button_ok)).on_press(Message::ButtonOkPressed)
+                ]
+                .align_y(Center)
+                .spacing(10)
+                .padding(10)
+            ]
+        ])
+        .padding(10)
         .into()
     }
 }
