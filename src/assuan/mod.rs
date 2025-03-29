@@ -40,6 +40,7 @@ enum Command {
     SetOk(String),
     SetCancel(String),
     SetNotOk(String),
+    SetError(String),
 }
 
 impl TryFrom<String> for Command {
@@ -76,6 +77,7 @@ impl TryFrom<String> for Command {
             "SETOK" => Ok(Command::SetOk(remainder.to_owned())),
             "SETCANCEL" => Ok(Command::SetCancel(remainder.to_owned())),
             "SETNOTOK" => Ok(Command::SetNotOk(remainder.to_owned())),
+            "SETERROR" => Ok(Command::SetError(remainder.to_owned())),
             _ => Err(ParseErr::UnknownCommand(value)),
         }
     }
@@ -178,6 +180,13 @@ mod test {
         assert_eq!(
             Command::SetNotOk("hello".to_string()),
             Command::try_from("SETNOTOK hello").unwrap()
+        )
+    }
+    #[test]
+    fn parse_set_error() {
+        assert_eq!(
+            Command::SetError("hello".to_string()),
+            Command::try_from("SETERROR hello").unwrap()
         )
     }
 }
