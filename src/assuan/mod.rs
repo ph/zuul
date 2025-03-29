@@ -110,6 +110,7 @@ enum OptionArgs {
     ConstraintsEnforce,
     ConstraintsHintShort(String),
     ConstraintsHintLong(String),
+    FormattedPassphrase,
 }
 
 impl TryFrom<&str> for OptionArgs {
@@ -127,6 +128,7 @@ impl TryFrom<&str> for OptionArgs {
             ("constraints-enforce", "") => Ok(ConstraintsEnforce),
             ("constraints-hint-short", _) => Ok(ConstraintsHintShort(args.to_owned())),
             ("constraints-hint-long", _) => Ok(ConstraintsHintLong(args.to_owned())),
+            ("formatted-passphrase", _) => Ok(FormattedPassphrase),
             (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),
         }
     }
@@ -273,6 +275,14 @@ mod test {
         assert_eq!(
             Command::Option(OptionArgs::ConstraintsHintLong("hello".to_string())),
             Command::try_from("OPTION constraints-hint-long=hello").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_formatted_passphrase() {
+        assert_eq!(
+            Command::Option(OptionArgs::FormattedPassphrase),
+            Command::try_from("OPTION formatted-passphrase").unwrap()
         )
     }
 
