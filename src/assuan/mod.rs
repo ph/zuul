@@ -41,6 +41,7 @@ enum Command {
     SetCancel(String),
     SetNotOk(String),
     SetError(String),
+    SetRepeat,
 }
 
 impl TryFrom<String> for Command {
@@ -78,6 +79,7 @@ impl TryFrom<String> for Command {
             "SETCANCEL" => Ok(Command::SetCancel(remainder.to_owned())),
             "SETNOTOK" => Ok(Command::SetNotOk(remainder.to_owned())),
             "SETERROR" => Ok(Command::SetError(remainder.to_owned())),
+            "SETREPEAT" => Ok(Command::SetRepeat),
             _ => Err(ParseErr::UnknownCommand(value)),
         }
     }
@@ -188,5 +190,10 @@ mod test {
             Command::SetError("hello".to_string()),
             Command::try_from("SETERROR hello").unwrap()
         )
+    }
+
+    #[test]
+    fn parse_set_repeat() {
+        assert_eq!(Command::SetRepeat, Command::try_from("SETREPEAT").unwrap())
     }
 }
