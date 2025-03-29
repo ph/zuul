@@ -112,6 +112,10 @@ enum OptionArgs {
     ConstraintsHintLong(String),
     FormattedPassphrase,
     FormattedPassphraseHint(String),
+    // NOTE: Not sure of the inner type yet.
+    TtyName(String),
+    TtyType(String),
+    LcCType(String),
 }
 
 impl TryFrom<&str> for OptionArgs {
@@ -131,6 +135,9 @@ impl TryFrom<&str> for OptionArgs {
             ("constraints-hint-long", _) => Ok(ConstraintsHintLong(args.to_owned())),
             ("formatted-passphrase", _) => Ok(FormattedPassphrase),
             ("formatted-passphrase-hint", _) => Ok(FormattedPassphraseHint(args.to_owned())),
+            ("ttyname", _) => Ok(TtyName(args.to_owned())),
+            ("ttytype", _) => Ok(TtyType(args.to_owned())),
+            ("lc-ctype", _) => Ok(LcCType(args.to_owned())),
             (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),
         }
     }
@@ -293,6 +300,30 @@ mod test {
         assert_eq!(
             Command::Option(OptionArgs::FormattedPassphraseHint("hello".to_string())),
             Command::try_from("OPTION formatted-passphrase-hint=hello").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_ttyname() {
+        assert_eq!(
+            Command::Option(OptionArgs::TtyName("hello".to_string())),
+            Command::try_from("OPTION ttyname=hello").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_ttytype() {
+        assert_eq!(
+            Command::Option(OptionArgs::TtyType("hello".to_string())),
+            Command::try_from("OPTION ttytype=hello").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_lc_ctype() {
+        assert_eq!(
+            Command::Option(OptionArgs::LcCType("hello".to_string())),
+            Command::try_from("OPTION lc-ctype=hello").unwrap()
         )
     }
 
