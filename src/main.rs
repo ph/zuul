@@ -117,7 +117,9 @@ impl Application {
         column![
             row![
                 text(f.prompt),
-                text_input("", &self.passphrase).on_input(Message::PassphraseChanged)
+                text_input("", &self.passphrase)
+                    .on_input(Message::PassphraseChanged)
+                    .secure(true),
             ],
             row!(
                 button(text(f.button_cancel)).on_press(Message::ButtonCancelPressed),
