@@ -8,6 +8,7 @@ enum ParseErr {
     StringTooLong(usize),
     Empty,
     InvalidDuration(String),
+    UnknownOption(String),
 }
 
 impl std::error::Error for ParseErr {}
@@ -24,6 +25,7 @@ impl std::fmt::Display for ParseErr {
             ),
             Empty => write!(f, "empty string"),
             InvalidDuration(s) => write!(f, "invalid duration, error converting `{}`", s),
+            UnknownOption(s) => write!(f, "unknown OPTION named `{}`", s),
         }
     }
 }
@@ -43,6 +45,8 @@ enum Command {
     SetError(String),
     SetRepeat,
     SetQualityBar,
+    SetQualityBarTT(String),
+    Option(OptionArgs),
 }
 
 impl TryFrom<String> for Command {
@@ -82,6 +86,8 @@ impl TryFrom<String> for Command {
             "SETERROR" => Ok(Command::SetError(remainder.to_owned())),
             "SETREPEAT" => Ok(Command::SetRepeat),
             "SETQUALITYBAR" => Ok(Command::SetQualityBar),
+            "SETQUALITYBAR_TT" => Ok(Command::SetQualityBarTT(remainder.to_owned())),
+            "OPTION" => Ok(Command::Option(OptionArgs::try_from(remainder)?)),
             _ => Err(ParseErr::UnknownCommand(value)),
         }
     }
@@ -92,6 +98,33 @@ impl TryFrom<&str> for Command {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Command::try_from(value.to_string())
+    }
+}
+
+#[derive(Debug, PartialEq)]
+enum OptionArgs {
+    ConstraintsEnforce,
+    ConstraintsHintShort(String),
+    ConstraintsHintLong(String),
+}
+
+impl TryFrom<&str> for OptionArgs {
+    type Error = ParseErr;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let (option, args) = match value.split_once('=') {
+            Some(v) => v,
+            None => (value, ""),
+        };
+
+        use OptionArgs::*;
+
+        match (option, args) {
+            ("constraints-enforce", "") => Ok(ConstraintsEnforce),
+            ("constraints-hint-short", _) => Ok(ConstraintsHintShort(args.to_owned())),
+            ("constraints-hint-long", _) => Ok(ConstraintsHintLong(args.to_owned())),
+            (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),
+        }
     }
 }
 
@@ -204,6 +237,30 @@ mod test {
         assert_eq!(
             Command::SetQualityBar,
             Command::try_from("SETQUALITYBAR").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_constraints_enforce() {
+        assert_eq!(
+            Command::Option(OptionArgs::ConstraintsEnforce),
+            Command::try_from("OPTION constraints-enforce").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_constraints_hint_short_text() {
+        assert_eq!(
+            Command::Option(OptionArgs::ConstraintsHintShort("hello".to_string())),
+            Command::try_from("OPTION constraints-hint-short=hello").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_constraints_hint_long_text() {
+        assert_eq!(
+            Command::Option(OptionArgs::ConstraintsHintLong("hello".to_string())),
+            Command::try_from("OPTION constraints-hint-long=hello").unwrap()
         )
     }
 }
