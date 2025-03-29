@@ -35,6 +35,7 @@ enum Command {
     Comment(String),
     //
     SetTimeOut(Duration),
+    SetPrompt(String),
 }
 
 impl TryFrom<String> for Command {
@@ -66,6 +67,7 @@ impl TryFrom<String> for Command {
             }
             "OK" => Ok(Command::Ok),
             "SETTITLE" => Ok(Command::SetTitle(remainder.to_owned())),
+            "SETPROMPT" => Ok(Command::SetPrompt(remainder.to_owned())),
             _ => Err(ParseErr::UnknownCommand(value)),
         }
     }
@@ -128,6 +130,14 @@ mod test {
         assert_eq!(
             Command::SetTimeOut(Duration::from_secs(20)),
             Command::try_from("SETTIMEOUT 20").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_set_prompt() {
+        assert_eq!(
+            Command::SetPrompt("hello".to_string()),
+            Command::try_from("SETPROMPT hello").unwrap()
         )
     }
 }
