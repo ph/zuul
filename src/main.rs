@@ -278,8 +278,6 @@ async fn perform_response(response: Response) -> Result<(), ZuulErr> {
 }
 
 fn main() -> iced::Result {
-    // tracing_subscriber::fmt::init();
-
     iced::application(Application::title, Application::update, Application::view)
         .window(iced::window::Settings{
 	    position: Position::Centered,
