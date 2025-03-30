@@ -33,16 +33,20 @@ impl std::fmt::Display for ParseErr {
 #[derive(Debug, PartialEq)]
 pub enum Response {
     Ok,
+    OkHello,
     Quit,
     Reset,
+    Data(String),
 }
 
 impl std::fmt::Display for Response {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Response::Ok => write!(f, "OK"),
+            Response::OkHello => write!(f, "OK Hello and waiting"),
             Response::Quit => todo!(),
             Response::Reset => todo!(),
+            Response::Data(data) => write!(f, "D {}", data),
         }
     }
 }

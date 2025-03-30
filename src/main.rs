@@ -1,4 +1,4 @@
-use std::io::ErrorKind;
+use std::io::{BufWriter, ErrorKind};
 
 use assuan::{Command, ParseErr, Response};
 use iced::{
@@ -10,6 +10,7 @@ use iced::stream;
 use tokio::io::BufReader;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
+use std::io::Write;
 
 mod assuan;
 
@@ -43,22 +44,15 @@ impl From<ParseErr> for ZuulErr {
     }
 }
 
-struct Application {
-    passphrase: String,
-    received_commands: Vec<Command>,
-    ready: bool
-}
-
 #[derive(Debug, Clone)]
 enum Message {
     PassphraseChanged(String),
     ButtonOkPressed,
     ButtonCancelPressed,
-    Output(String),
     Input(Command),
-    Fatal(ZuulErr),
     WindowEvent(Id, Event),
-    ShowView(Result<(), ZuulErr>),
+    Result(Result<(), ZuulErr>),
+    Fatal(ZuulErr),
 }
 
 struct Form {
@@ -73,6 +67,7 @@ struct FormBuilder {
     button_cancel: String,
 }
 
+    
 impl FormBuilder {
     fn new() -> Self {
         Self {
@@ -121,89 +116,123 @@ fn apply_commands(commands: &[Command]) -> Form {
     b.build()
 }
 
+
+#[derive(Default)]
+struct WaitingState {
+    title: String,
+    received_commands: Vec<Command>,
+}
+
+struct DisplayState {
+    form: Form,
+    passphrase: String,
+}
+
+enum Application {
+    Waiting(WaitingState),
+    Display(DisplayState),
+}
+
 impl Application {
     fn new() -> (Self, Task<Message>) {
-        (
-            Self {
-                passphrase: String::new(),
-		received_commands: Vec::new(),
-		ready: false,
-            },
-            Task::none(),
-        )
+	(
+	    Self::Waiting(
+		WaitingState {
+		    title: "".to_string(),
+		    received_commands: Vec::new(),
+		}
+	    )
+		,
+	    Task::none(),
+	)
     }
 
     fn title(&self) -> String {
-        String::from("Zuul")
-    }
-
-    fn output(&self, s: &str) {
-        println!("my passphrase is: {}", s)
+	match self {
+	    Application::Waiting(state) => state.title.clone(),
+	    Application::Display(_state) => String::from("display"),
+	}
     }
 
     fn update(&mut self, message: Message) -> Task<Message> {
-        // debug!(message=?message, "new message");
-        match message {
-            Message::PassphraseChanged(p) => self.passphrase = p,
-            Message::ButtonOkPressed => self.output(&self.passphrase),
-            Message::ButtonCancelPressed => println!("cancel"),
-            Message::Output(_) => todo!(),
-            Message::Input(command) => {
-		        match command {
-		            Command::GetPin => {
-			        self.received_commands.push(command);
-			        self.ready = true;
-		            }
-		            _ => {
-			        self.received_commands.push(command);
-			        return Task::perform(perform_response(Response::Ok), Message::ShowView)
-		            }
-		        }
+	match self {
+	    Application::Waiting(state) =>  {
+		match message {
+		    Message::Result(_r) => Task::none(),
+		    Message::Input(command) =>  {
+			match command {
+			    Command::GetPin => {
+				state.received_commands.push(command);
+				let f = apply_commands(&state.received_commands);
 
-	            }
-            Message::Fatal(err) => println!("error: {}", err),
-            Message::WindowEvent(id, event) => println!("id: {}, events: {:?}", id, event),
-            Message::ShowView(v) => println!("{:?} showview", v),
-        }
-
-	Task::none()
+				*self = Application::Display(DisplayState{
+				    form: f,
+				    passphrase: String::new(),
+				});
+				Task::none()
+			    }
+			    _  => {
+				state.received_commands.push(command);
+			        Task::perform(perform_response(Response::Ok), Message::Result)
+			    }
+			}
+		    }
+		    _ => Task::none(),
+		}
+	    }
+	    Application::Display(state) => {
+		match message {
+		    Message::PassphraseChanged(p) => {
+			state.passphrase = p;
+			Task::none()
+		    }
+		    Message::ButtonOkPressed =>  {
+			let passphrase = state.passphrase.clone();
+			*self = Application::Waiting(WaitingState::default());
+			return Task::perform(perform_response(Response::Data(passphrase)), Message::Result)
+		    }
+		    Message::ButtonCancelPressed => Task::none(),
+		    Message::Result(_) => Task::none(),
+		    _ => Task::none(),
+		}
+	    }
+	}
     }
 
     fn view(&self) -> Element<Message> {
-	println!("{:?} self.ready", self.ready);
-	
-	if self.ready {
-	    let f = apply_commands(&self.received_commands);
-
-	    container(row![
-		text(f.prompt),
-		column![
-		    text_input("", &self.passphrase)
-			.on_input(Message::PassphraseChanged)
-			.secure(true),
-		    row![
-			button(text(f.button_cancel)).on_press(Message::ButtonCancelPressed),
-			button(text(f.button_ok)).on_press(Message::ButtonOkPressed)
+	match self {
+	    Application::Waiting(_state) => text("hello?").into(),
+	    Application::Display(state) => {
+		container(row![
+		    text(state.form.prompt.clone()),
+		    column![
+			text_input("", &state.passphrase)
+			    .on_input(Message::PassphraseChanged)
+			    .secure(true),
+			row![
+			    button(text(state.form.button_cancel.clone())).on_press(Message::ButtonCancelPressed),
+			    button(text(state.form.button_ok.clone())).on_press(Message::ButtonOkPressed)
+			]
+			    .align_y(Center)
+			    .spacing(10)
+			    .padding(10)
 		    ]
-			.align_y(Center)
-			.spacing(10)
-			.padding(10)
-		]
-	    ])
-		.padding(10)
-		.into()
-	} else {
-	    text("hello?").into()
+		])
+		    .padding(10)
+		    .into()
+	    }
 	}
     }
 
     fn subscription(&self) -> Subscription<Message> {
 	Subscription::batch(
-	    vec![subscribe_to_commands(),
-		 window::events().map( |(id, event)| Message::WindowEvent(id, event)),
-	    ]
+	    vec![subscribe_to_commands(), subscribe_to_window_events(),]
 	)
     }
+}
+
+fn subscribe_to_window_events() -> Subscription<Message> {
+    window::events().map( |(id, event)| Message::WindowEvent(id, event))
 }
 
 fn subscribe_to_commands() -> Subscription<Message>{
@@ -224,6 +253,12 @@ fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> 
 	let buf = BufReader::new(stdin);
 	let mut lines = buf.lines();
 
+	let mut stdout = std::io::stdout();
+	let mut writer = BufWriter::new(&stdout);
+	writeln!(writer, "{}", Response::OkHello).map_err(|_|  ZuulErr::Output)?;
+	writer.flush().map_err(|_|  ZuulErr::Output)?;
+
+
 	while let Some(line) = lines.next_line().await? {
 	    let command = Command::try_from(line)?;
 	    output.send(command).await;
@@ -234,14 +269,16 @@ fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> 
 }
 
 async fn perform_response(response: Response) -> Result<(), ZuulErr> {
-    let mut stdout = tokio::io::stdout();
-    //todo: buf
-    stdout.write_all(&response.to_string().as_bytes()).await.map_err(|_| ZuulErr::Output)?;
+    let mut stdout = std::io::stdout();
+    let mut writer = BufWriter::new(&stdout);
+    writeln!(writer, "{}", response).map_err(|_|  ZuulErr::Output)?;
+    writer.flush().map_err(|_|  ZuulErr::Output)?;
+
     Ok(())
 }
 
 fn main() -> iced::Result {
-    tracing_subscriber::fmt::init();
+    // tracing_subscriber::fmt::init();
 
     iced::application(Application::title, Application::update, Application::view)
         .window(iced::window::Settings{
