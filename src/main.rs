@@ -1,11 +1,45 @@
-use assuan::Command;
+use std::io::ErrorKind;
+
+use assuan::{Command, ParseErr};
 use iced::{
-    widget::{button, column, container, row, text, text_input},
-    Alignment::Center,
-    Element, Padding, Task,
+    futures::Stream, widget::{button, column, container, row, text, text_input}, Alignment::Center, Element, Task
 };
+use iced::futures::sink::SinkExt;
+use iced::Subscription;
+use iced::stream;
+use tokio::io::BufReader;
+use tokio::io::AsyncBufReadExt;
 
 mod assuan;
+
+#[derive(Debug, Clone)]
+enum ZuulErr {
+    Input(ErrorKind),
+    Parsing(ParseErr),
+}
+
+impl std::error::Error  for ZuulErr {}
+impl std::fmt::Display for ZuulErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	match self {
+	    ZuulErr::Input(e) => write!(f, "error `{}` while reading stdin input", e),
+	    ZuulErr::Parsing(e) => write!(f, "error `{}` while parssing pinentry commands", e)
+
+	}
+    }
+}
+
+impl From<std::io::Error> for ZuulErr {
+    fn from(value: std::io::Error) -> Self {
+	ZuulErr::Input(value.kind())
+    }
+}
+
+impl From<ParseErr> for ZuulErr {
+    fn from(value: ParseErr) -> Self {
+	ZuulErr::Parsing(value)
+    }
+}
 
 struct Application {
     passphrase: String,
@@ -17,6 +51,8 @@ enum Message {
     ButtonOkPressed,
     ButtonCancelPressed,
     Output(String),
+    Input(Command),
+    Fatal(ZuulErr),
 }
 
 struct Form {
@@ -104,6 +140,8 @@ impl Application {
             Message::ButtonOkPressed => self.output(&self.passphrase),
             Message::ButtonCancelPressed => println!("cancel"),
             Message::Output(_) => todo!(),
+            Message::Input(command) => println!("pintentry: {:?}", command),
+            Message::Fatal(err) => println!("error: {}", err),
         }
     }
 
@@ -133,6 +171,37 @@ impl Application {
         .padding(10)
         .into()
     }
+
+    fn subscription(&self) -> Subscription<Message> {
+	subscribe_to_commands()
+    }
+}
+
+fn subscribe_to_commands() -> Subscription<Message>{
+    Subscription::run_with_id(
+	std::any::TypeId::of::<Command>(),
+	read_external_commands_input()
+    ).map(|e| {
+	match e {
+	    Ok(c) => Message::Input(c),
+	    Err(e) => Message::Fatal(e),
+	}
+    })
+}
+
+fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> {
+    stream::try_channel(1, async move |mut output| {
+	let stdin = tokio::io::stdin();
+	let buf = BufReader::new(stdin);
+	let mut lines = buf.lines();
+
+	while let Some(line) = lines.next_line().await? {
+	    let command = Command::try_from(line)?;
+	    output.send(command).await;
+	}
+
+	Ok(())
+    })
 }
 
 fn main() -> iced::Result {
@@ -141,5 +210,6 @@ fn main() -> iced::Result {
     iced::application(Application::title, Application::update, Application::view)
         // .subscription(Application::subscription)
         .window_size((400.0, 400.0))
+        .subscription(Application::subscription)
         .run_with(Application::new)
 }

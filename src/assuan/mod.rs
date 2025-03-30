@@ -2,7 +2,7 @@ use std::time::Duration;
 
 const LINE_LIMITS: usize = 1000;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ParseErr {
     UnknownCommand(String),
     StringTooLong(usize),
@@ -37,7 +37,7 @@ pub enum ClientResponse {
     Reset,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Command {
     // Not sure if this is worth it
     Ok,
@@ -123,7 +123,7 @@ impl TryFrom<&str> for Command {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum OptionArgs {
     ConstraintsEnforce,
     ConstraintsHintShort(String),
