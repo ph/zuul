@@ -2,7 +2,7 @@ use std::io::ErrorKind;
 
 use assuan::{Command, ParseErr};
 use iced::{
-    futures::Stream, widget::{button, column, container, row, text, text_input}, Alignment::Center, Element, Task
+    futures::Stream, widget::{button, column, container, row, text, text_input}, window::{settings::PlatformSpecific, Position}, Alignment::Center, Element, Task
 };
 use iced::futures::sink::SinkExt;
 use iced::Subscription;
@@ -133,7 +133,7 @@ impl Application {
         println!("my passphrase is: {}", s)
     }
 
-    fn update(&mut self, message: Message) {
+    fn update(&mut self, message: Message) -> Task<Message> {
         // debug!(message=?message, "new message");
         match message {
             Message::PassphraseChanged(p) => self.passphrase = p,
@@ -143,6 +143,8 @@ impl Application {
             Message::Input(command) => println!("pintentry: {:?}", command),
             Message::Fatal(err) => println!("error: {}", err),
         }
+
+	Task::none()
     }
 
     fn view(&self) -> Element<Message> {
@@ -208,7 +210,15 @@ fn main() -> iced::Result {
     tracing_subscriber::fmt::init();
 
     iced::application(Application::title, Application::update, Application::view)
-        // .subscription(Application::subscription)
+        .window(iced::window::Settings{
+	    position: Position::Centered,
+	    platform_specific: PlatformSpecific {
+		application_id: String::from("zuul"),
+		override_redirect: true,
+		
+	    },
+	    ..Default::default()
+	})
         .window_size((400.0, 400.0))
         .subscription(Application::subscription)
         .run_with(Application::new)
