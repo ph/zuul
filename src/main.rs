@@ -150,13 +150,13 @@ impl Application {
             Message::Output(_) => todo!(),
             Message::Input(command) => {
 		        match command {
-		            _ => {
-			        self.received_commands.push(command);
-			        return Task::perform(perform_response(Response::Ok), Message::ShowView)
-		            }
 		            Command::GetPin => {
 			        self.received_commands.push(command);
 			        self.ready = true;
+		            }
+		            _ => {
+			        self.received_commands.push(command);
+			        return Task::perform(perform_response(Response::Ok), Message::ShowView)
 		            }
 		        }
 
@@ -170,6 +170,8 @@ impl Application {
     }
 
     fn view(&self) -> Element<Message> {
+	println!("{:?} self.ready", self.ready);
+	
 	if self.ready {
 	    let f = apply_commands(&self.received_commands);
 
