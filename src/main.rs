@@ -1,6 +1,6 @@
 use std::io::ErrorKind;
 
-use assuan::{Command, ParseErr};
+use assuan::{Command, ParseErr, Response};
 use iced::{
     futures::Stream, widget::{button, column, container, row, text, text_input}, window::{self, settings::PlatformSpecific, Event, Id, Position}, Alignment::Center, Element, Task
 };
@@ -9,6 +9,7 @@ use iced::Subscription;
 use iced::stream;
 use tokio::io::BufReader;
 use tokio::io::AsyncBufReadExt;
+use tokio::io::AsyncWriteExt;
 
 mod assuan;
 
@@ -16,6 +17,7 @@ mod assuan;
 enum ZuulErr {
     Input(ErrorKind),
     Parsing(ParseErr),
+    Output
 }
 
 impl std::error::Error  for ZuulErr {}
@@ -23,8 +25,8 @@ impl std::fmt::Display for ZuulErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 	match self {
 	    ZuulErr::Input(e) => write!(f, "error `{}` while reading stdin input", e),
-	    ZuulErr::Parsing(e) => write!(f, "error `{}` while parssing pinentry commands", e)
-
+	    ZuulErr::Parsing(e) => write!(f, "error `{}` while parssing pinentry commands", e),
+	    ZuulErr::Output => write!(f, "todo output"),
 	}
     }
 }
@@ -43,6 +45,8 @@ impl From<ParseErr> for ZuulErr {
 
 struct Application {
     passphrase: String,
+    received_commands: Vec<Command>,
+    ready: bool
 }
 
 #[derive(Debug, Clone)]
@@ -53,7 +57,8 @@ enum Message {
     Output(String),
     Input(Command),
     Fatal(ZuulErr),
-    WindowEvent(Id, Event)
+    WindowEvent(Id, Event),
+    ShowView(Result<(), ZuulErr>),
 }
 
 struct Form {
@@ -121,6 +126,8 @@ impl Application {
         (
             Self {
                 passphrase: String::new(),
+		received_commands: Vec::new(),
+		ready: false,
             },
             Task::none(),
         )
@@ -141,39 +148,51 @@ impl Application {
             Message::ButtonOkPressed => self.output(&self.passphrase),
             Message::ButtonCancelPressed => println!("cancel"),
             Message::Output(_) => todo!(),
-            Message::Input(command) => println!("pintentry: {:?}", command),
+            Message::Input(command) => {
+		        match command {
+		            _ => {
+			        self.received_commands.push(command);
+			        return Task::perform(perform_response(Response::Ok), Message::ShowView)
+		            }
+		            Command::GetPin => {
+			        self.received_commands.push(command);
+			        self.ready = true;
+		            }
+		        }
+
+	            }
             Message::Fatal(err) => println!("error: {}", err),
             Message::WindowEvent(id, event) => println!("id: {}, events: {:?}", id, event),
+            Message::ShowView(v) => println!("{:?} showview", v),
         }
 
 	Task::none()
     }
 
     fn view(&self) -> Element<Message> {
-        let f = apply_commands(&vec![
-            Command::SetOk(String::from("This is ok")),
-            Command::SetPrompt(String::from("This is my seeecrets")),
-            Command::SetCancel(String::from(" I have changed my mind")),
-            Command::GetPin,
-        ]);
+	if self.ready {
+	    let f = apply_commands(&self.received_commands);
 
-        container(row![
-            text(f.prompt),
-            column![
-                text_input("", &self.passphrase)
-                    .on_input(Message::PassphraseChanged)
-                    .secure(true),
-                row![
-                    button(text(f.button_cancel)).on_press(Message::ButtonCancelPressed),
-                    button(text(f.button_ok)).on_press(Message::ButtonOkPressed)
-                ]
-                .align_y(Center)
-                .spacing(10)
-                .padding(10)
-            ]
-        ])
-        .padding(10)
-        .into()
+	    container(row![
+		text(f.prompt),
+		column![
+		    text_input("", &self.passphrase)
+			.on_input(Message::PassphraseChanged)
+			.secure(true),
+		    row![
+			button(text(f.button_cancel)).on_press(Message::ButtonCancelPressed),
+			button(text(f.button_ok)).on_press(Message::ButtonOkPressed)
+		    ]
+			.align_y(Center)
+			.spacing(10)
+			.padding(10)
+		]
+	    ])
+		.padding(10)
+		.into()
+	} else {
+	    text("hello?").into()
+	}
     }
 
     fn subscription(&self) -> Subscription<Message> {
@@ -210,6 +229,13 @@ fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> 
 
 	Ok(())
     })
+}
+
+async fn perform_response(response: Response) -> Result<(), ZuulErr> {
+    let mut stdout = tokio::io::stdout();
+    //todo: buf
+    stdout.write_all(&response.to_string().as_bytes()).await.map_err(|_| ZuulErr::Output)?;
+    Ok(())
 }
 
 fn main() -> iced::Result {
