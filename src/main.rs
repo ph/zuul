@@ -2,7 +2,7 @@ use std::io::ErrorKind;
 
 use assuan::{Command, ParseErr};
 use iced::{
-    futures::Stream, widget::{button, column, container, row, text, text_input}, window::{settings::PlatformSpecific, Position}, Alignment::Center, Element, Task
+    futures::Stream, widget::{button, column, container, row, text, text_input}, window::{self, settings::PlatformSpecific, Event, Id, Position}, Alignment::Center, Element, Task
 };
 use iced::futures::sink::SinkExt;
 use iced::Subscription;
@@ -53,6 +53,7 @@ enum Message {
     Output(String),
     Input(Command),
     Fatal(ZuulErr),
+    WindowEvent(Id, Event)
 }
 
 struct Form {
@@ -142,6 +143,7 @@ impl Application {
             Message::Output(_) => todo!(),
             Message::Input(command) => println!("pintentry: {:?}", command),
             Message::Fatal(err) => println!("error: {}", err),
+            Message::WindowEvent(id, event) => println!("id: {}, events: {:?}", id, event),
         }
 
 	Task::none()
@@ -175,7 +177,11 @@ impl Application {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-	subscribe_to_commands()
+	Subscription::batch(
+	    vec![subscribe_to_commands(),
+		 window::events().map( |(id, event)| Message::WindowEvent(id, event)),
+	    ]
+	)
     }
 }
 
