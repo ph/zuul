@@ -1,16 +1,22 @@
-use std::io::{BufWriter, ErrorKind};
+use std::{fs::File, io::{BufWriter, ErrorKind}};
 
 use assuan::{Command, ParseErr, Response};
 use iced::{
-    futures::Stream, widget::{button, column, container, row, text, text_input}, window::{self, settings::PlatformSpecific, Event, Id, Position}, Alignment::Center, Element, Task
+    futures::Stream, widget::{button, column, container, horizontal_space, row, text, text_input}, window::{self, settings::PlatformSpecific, Event, Id, Position}, Element, Task
 };
 use iced::futures::sink::SinkExt;
 use iced::Subscription;
 use iced::stream;
+use iced::Theme;
 use tokio::io::BufReader;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
+use tracing::{debug, info, Level};
+use tracing_appender::rolling;
+use tracing_subscriber::{filter::{self, Targets}, fmt, prelude::*};
 use std::io::Write;
+use std::sync::Arc;
+
 
 mod assuan;
 
@@ -203,25 +209,31 @@ impl Application {
 	match self {
 	    Application::Waiting(_state) => text("hello?").into(),
 	    Application::Display(state) => {
-		container(row![
-		    text(state.form.prompt.clone()),
-		    column![
-			text_input("", &state.passphrase)
-			    .on_input(Message::PassphraseChanged)
-			    .secure(true),
-			row![
-			    button(text(state.form.button_cancel.clone())).on_press(Message::ButtonCancelPressed),
-			    button(text(state.form.button_ok.clone())).on_press(Message::ButtonOkPressed)
-			]
-			    .align_y(Center)
-			    .spacing(10)
-			    .padding(10)
-		    ]
-		])
+		container(
+		    column![]
+			.push(text(state.form.prompt.clone()))
+			.push(
+			    text_input("", &state.passphrase)
+				.on_input(Message::PassphraseChanged)
+				.secure(true)
+			).push(
+			    row![]
+				.push(horizontal_space())
+				.push(button(text(state.form.button_cancel.clone())).on_press(Message::ButtonCancelPressed),)
+				.push(horizontal_space().width(iced::Length::Fixed(10.0)))
+				.push(button(text(state.form.button_ok.clone())).on_press(Message::ButtonOkPressed))
+				.width(iced::Length::Fill)
+				.padding(iced::Padding::from([10, 0]))
+			)
+		)
 		    .padding(10)
 		    .into()
 	    }
 	}
+    }
+
+    fn theme(&self) -> Theme {
+	Theme::CatppuccinMocha
     }
 
     fn subscription(&self) -> Subscription<Message> {
@@ -260,6 +272,8 @@ fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> 
 
 
 	while let Some(line) = lines.next_line().await? {
+	    debug!(line=?line, "raw");
+
 	    let command = Command::try_from(line)?;
 	    output.send(command).await;
 	}
@@ -277,7 +291,24 @@ async fn perform_response(response: Response) -> Result<(), ZuulErr> {
     Ok(())
 }
 
+fn configure_logging() {
+    let file = File::create("debug.log").unwrap();
+    let output = fmt::layer()
+	.with_writer(Arc::new(file));
+
+    tracing_subscriber::registry()
+        .with(
+	    output.with_filter(Targets::default().with_target("zuul", Level::DEBUG).with_default(Level::INFO))
+	)
+        .init();
+}
+
 fn main() -> iced::Result {
+    configure_logging();
+
+    info!("starting zuul");
+
+
     iced::application(Application::title, Application::update, Application::view)
         .window(iced::window::Settings{
 	    position: Position::Centered,
@@ -288,6 +319,7 @@ fn main() -> iced::Result {
 	    },
 	    ..Default::default()
 	})
+        .theme(Application::theme)
         .window_size((400.0, 400.0))
         .subscription(Application::subscription)
         .run_with(Application::new)
