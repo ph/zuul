@@ -199,12 +199,14 @@ impl Application {
 		    Message::ButtonOkPressed =>  {
 			let passphrase = state.passphrase.clone();
 			*self = Application::Waiting(WaitingState::default());
-			// return Task::perform(perform_response(Response::Data(passphrase)), Message::Result).then(perform_response(Response::Ok)).map(Message::Result)
+
 			Task::future(perform_response(Response::Data(passphrase)))
 			    .then(|_| Task::future(perform_response(Response::Ok)))
 			    .map(Message::Result)
 		    }
-		    Message::ButtonCancelPressed => Task::none(),
+		    Message::ButtonCancelPressed =>{
+			window::get_latest().and_then(window::close)
+		    } 
 		    Message::Result(_) => Task::none(),
 		    Message::Input(_command) => Task::none(),
 		    _ => Task::none(),
