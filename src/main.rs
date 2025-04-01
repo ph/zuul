@@ -6,7 +6,7 @@ use std::{io::{BufWriter, ErrorKind}};
 
 use assuan::{Command, ParseErr, Response};
 use iced::{
-    futures::Stream, widget::{button, column, container, horizontal_space, row, text, text_input}, window::{self, settings::PlatformSpecific, Position}, Element, Task
+    event, futures::Stream, keyboard::{self, key::Named, Key}, widget::{button, column, container, horizontal_space, row, text, text_input}, window::{self, settings::PlatformSpecific, Position}, Element, Event, Task
 };
 use iced::futures::sink::SinkExt;
 use iced::Subscription;
@@ -56,7 +56,7 @@ enum Message {
     ButtonOkPressed,
     ButtonCancelPressed,
     Input(Command),
-    // WindowEvent(Id, Event),
+    EventOccurred(Event),
     Result(Result<(), ZuulErr>),
     Fatal,
 }
@@ -167,9 +167,7 @@ impl Application {
 		    Message::Result(_r) => Task::none(),
 		    Message::Input(command) =>  {
 			match command {
-			    Command::Bye => {
-				window::get_latest().and_then(window::close)
-			    },
+			    Command::Bye => self.close(),
 			    Command::GetPin => {
 				state.received_commands.push(command);
 				let f = apply_commands(&state.received_commands);
@@ -192,6 +190,8 @@ impl Application {
 	    }
 	    Application::Display(state) => {
 		match message {
+		    Message::EventOccurred(Event::Keyboard(
+			keyboard::Event::KeyReleased { key: Key::Named(Named::Escape) , ..})) => self.close(),
 		    Message::PassphraseChanged(p) => {
 			state.passphrase = p;
 			Task::none()
@@ -211,6 +211,10 @@ impl Application {
 		}
 	    }
 	}
+    }
+
+    fn close(&self) -> Task<Message> {
+	window::get_latest().and_then(window::close)
     }
 
     fn view(&self) -> Element<Message> {
@@ -248,14 +252,14 @@ impl Application {
 
     fn subscription(&self) -> Subscription<Message> {
 	Subscription::batch(
-	    vec![subscribe_to_commands()]
+	    vec![subscribe_to_commands(), subscribe_to_window_events()]
 	)
     }
 }
 
-// fn subscribe_to_window_events() -> Subscription<Message> {
-//     window::events().map( |(id, event)| Message::WindowEvent(id, event))
-// }
+fn subscribe_to_window_events() -> Subscription<Message> {
+    event::listen().map( Message::EventOccurred)
+}
 
 fn subscribe_to_commands() -> Subscription<Message>{
     Subscription::run_with_id(
