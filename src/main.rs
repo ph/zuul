@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-use std::io::{BufWriter, ErrorKind};
+use std::{io::{BufWriter, ErrorKind}};
 
 use assuan::{Command, ParseErr, Response};
 use iced::{
@@ -15,6 +15,8 @@ use iced::Theme;
 use tokio::io::BufReader;
 use tokio::io::AsyncBufReadExt;
 use std::io::Write;
+
+static INPUT_PASSPHRASE_ID : &str = "INPUT_PASSPHRASE_ID";
 
 mod assuan;
 
@@ -176,7 +178,8 @@ impl Application {
 				    form: f,
 				    passphrase: String::new(),
 				});
-				Task::none()
+
+				text_input::focus(INPUT_PASSPHRASE_ID)
 			    }
 			    _  => {
 				state.received_commands.push(command);
@@ -219,7 +222,9 @@ impl Application {
 			.push(text(state.form.prompt.clone()))
 			.push(
 			    text_input("", &state.passphrase)
+				.id(INPUT_PASSPHRASE_ID)
 				.on_input(Message::PassphraseChanged)
+				.on_submit(Message::ButtonOkPressed)
 				.secure(true)
 			).push(
 			    row![]
