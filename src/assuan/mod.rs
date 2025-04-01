@@ -2,7 +2,7 @@ use std::time::Duration;
 
 const LINE_LIMITS: usize = 1000;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum ParseErr {
     UnknownCommand(String),
     StringTooLong(usize),
@@ -30,13 +30,21 @@ impl std::fmt::Display for ParseErr {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub enum Response {
     Ok,
     OkHello,
-    Quit,
-    Reset,
     Data(String),
+}
+
+impl core::fmt::Debug for Response {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+	match self {
+	    Response::Ok => write!(f, "OK"),
+	    Response::OkHello => write!(f, "OK Please go ahead"),
+	    Response::Data(_) => write!(f, "D <SECURE>"),
+	}
+    }
 }
 
 impl std::fmt::Display for Response {
@@ -44,23 +52,31 @@ impl std::fmt::Display for Response {
         match self {
             Response::Ok => write!(f, "OK"),
             Response::OkHello => write!(f, "OK Please go ahead"),
-            Response::Quit => todo!(),
-            Response::Reset => todo!(),
-            Response::Data(data) => write!(f, "D {}", data),
+            Response::Data(_) => write!(f, "D <SECURE>"),
         }
+    }
+}
+
+impl Response {
+    pub fn to_pinentry(&self) -> String {
+	match self {
+	    Response::Ok => "OK".to_string(),
+	    Response::OkHello => "OK Please go ahead".to_string(),
+	    Response::Data(d) => format!("D {}", d), // This is need to be escaped
+	}
     }
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Command {
-    // Not sure if this is worth it
-    Ok,
-    Quit,
-    Reset,
+    // TODO(ph)
+    // Need to investigate theses commands
     // show dialog
     // Config, 	// Ask for confirmation
     // Message, // Show a message
-    GetPin, // Show dialog Ask the user for a PIN or passphrase
+    Reset,
+    Quit,
+    GetPin,
     Bye,
     GetInfo(String),
     SetTitle(String),
@@ -108,7 +124,6 @@ impl TryFrom<String> for Command {
                 );
                 Ok(Command::SetTimeOut(d))
             }
-            "OK" => Ok(Command::Ok),
             "GETPIN" => Ok(Command::GetPin),
             "GETINFO" => Ok(Command::GetInfo(remainder.to_owned())),
             "QUIT" => Ok(Command::Quit),
@@ -238,11 +253,6 @@ mod test {
             Command::Comment("Hello la famille".to_string()),
             Command::try_from("# Hello la famille").unwrap()
         );
-    }
-
-    #[test]
-    fn parse_ok() {
-        assert_eq!(Command::Ok, Command::try_from("OK").unwrap())
     }
 
     #[test]
@@ -418,10 +428,98 @@ mod test {
     }
 
     #[test]
+    fn parse_option_lc_messages() {
+        assert_eq!(
+            Command::Option(OptionArgs::LcMessages("hello".to_string())),
+            Command::try_from("OPTION lc-messages=hello").unwrap()
+        )
+    }
+
+    #[test]
     fn parse_option_allow_external_password_cache() {
         assert_eq!(
             Command::Option(OptionArgs::AllowExternalPasswordCache),
             Command::try_from("OPTION allow-external-password-cache").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_yes() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultYes("Yes".to_string())),
+            Command::try_from("OPTION default-yes=Yes").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_no() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultNo("No".to_string())),
+            Command::try_from("OPTION default-no=No").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_pwmngr() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultPwmngr("Save in".to_string())),
+            Command::try_from("OPTION default-pwmngr=Save in").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_cf_visi() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultCFVisi("Do you really want".to_string())),
+            Command::try_from("OPTION default-cf-visi=Do you really want").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_tt_visi() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultTTVisi("tooltip".to_string())),
+            Command::try_from("OPTION default-tt-visi=tooltip").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_tt_hide() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultTTHide("tooltip".to_string())),
+            Command::try_from("OPTION default-tt-hide=tooltip").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_default_capshint() {
+        assert_eq!(
+            Command::Option(OptionArgs::DefaultCapsHint("caps".to_string())),
+            Command::try_from("OPTION default-capshint=caps").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_touch_file() {
+        assert_eq!(
+            Command::Option(OptionArgs::TouchFile("myfile".to_string())),
+            Command::try_from("OPTION touch-file=myfile").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_owner() {
+        assert_eq!(
+            Command::Option(OptionArgs::Owner("29982/1000 babayaga".to_string())),
+            Command::try_from("OPTION owner=29982/1000 babayaga").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_no_grab() {
+        assert_eq!(
+            Command::Option(OptionArgs::NoGrab),
+            Command::try_from("OPTION no-grab").unwrap()
         )
     }
 

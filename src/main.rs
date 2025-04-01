@@ -12,8 +12,7 @@ use tokio::io::BufReader;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
 use tracing::{debug, info, Level};
-use tracing_appender::rolling;
-use tracing_subscriber::{filter::{self, Targets}, fmt, prelude::*};
+use tracing_subscriber::{filter::Targets, fmt, prelude::*};
 use std::io::Write;
 use std::sync::Arc;
 
@@ -292,8 +291,7 @@ fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> 
 async fn perform_response(response: Response) -> Result<(), ZuulErr> {
     let mut stdout = std::io::stdout();
     let mut writer = BufWriter::new(&stdout);
-    debug!("output: {}", response);
-    writeln!(writer, "{}", response).map_err(|_|  ZuulErr::Output)?;
+    writeln!(writer, "{}", response.to_pinentry()).map_err(|_|  ZuulErr::Output)?;
     writer.flush().map_err(|_|  ZuulErr::Output)?;
 
     Ok(())
