@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+//
+// SPDX-License-Identifier: MIT
 OPTION no-grab
 OPTION ttyname=/dev/pts/1
 OPTION ttytype=alacritty
@@ -20,7 +23,7 @@ GETINFO flavor
 GETINFO version
 GETINFO ttyinfo
 GETINFO pid
-SETKEYINFO n/608FF9E027DEDC5BA7A454386B5A169B5B577549
-SETDESC Please enter the passphrase to unlock the OpenPGP secret key:%0A%22Pier-Hugues Pellerin <ph@heykimo.com>%22%0A3072-bit RSA key, ID B7F7482246D645D9,%0Acreated 2023-02-23 (main key ID 8BAEC3055E5388F2).%0A
+SETKEYINFO n/...
+SETDESC Please enter the passphrase to 
 SETPROMPT Passphrase:
 GETPIN

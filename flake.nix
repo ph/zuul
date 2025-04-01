@@ -72,6 +72,7 @@
             pkgs.wayland 
             pkgs.vulkan-loader
             pkgs.reuse
+            pkgs.just
             # zbus_xmlgen
           ];
 
