@@ -43,7 +43,7 @@ impl std::fmt::Display for Response {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Response::Ok => write!(f, "OK"),
-            Response::OkHello => write!(f, "OK Hello and waiting"),
+            Response::OkHello => write!(f, "OK Please go ahead"),
             Response::Quit => todo!(),
             Response::Reset => todo!(),
             Response::Data(data) => write!(f, "D {}", data),
@@ -61,6 +61,8 @@ pub enum Command {
     // Config, 	// Ask for confirmation
     // Message, // Show a message
     GetPin, // Show dialog Ask the user for a PIN or passphrase
+    Bye,
+    GetInfo(String),
     SetTitle(String),
     Comment(String),
     SetTimeOut(Duration),
@@ -108,7 +110,9 @@ impl TryFrom<String> for Command {
             }
             "OK" => Ok(Command::Ok),
             "GETPIN" => Ok(Command::GetPin),
+            "GETINFO" => Ok(Command::GetInfo(remainder.to_owned())),
             "QUIT" => Ok(Command::Quit),
+            "BYE" => Ok(Command::Bye),
             "RESET" => Ok(Command::Reset),
             "SETTITLE" => Ok(Command::SetTitle(remainder.to_owned())),
             "SETDESC" => Ok(Command::SetDesc(remainder.to_owned())),
@@ -148,10 +152,21 @@ pub enum OptionArgs {
     TtyName(String),
     TtyType(String),
     LcCType(String),
+    LcMessages(String),
     DefaultOk(String),
     DefaultCancel(String),
     DefaultPrompt(String),
+    DefaultYes(String),
+    DefaultNo(String),
+    DefaultPwmngr(String),
+    DefaultCFVisi(String),
+    DefaultTTVisi(String),
+    DefaultTTHide(String),
+    DefaultCapsHint(String),
+    TouchFile(String),
+    Owner(String),
     AllowExternalPasswordCache,
+    NoGrab,
 }
 
 impl TryFrom<&str> for OptionArgs {
@@ -174,8 +189,19 @@ impl TryFrom<&str> for OptionArgs {
             ("ttyname", _) => Ok(TtyName(args.to_owned())),
             ("ttytype", _) => Ok(TtyType(args.to_owned())),
             ("lc-ctype", _) => Ok(LcCType(args.to_owned())),
+            ("lc-messages", _) => Ok(LcMessages(args.to_owned())), //test
             ("default-ok", _) => Ok(DefaultOk(args.to_owned())),
-            ("default-cancel", _) => Ok(DefaultCancel(args.to_owned())),
+            ("default-cancel", _) => Ok(DefaultCancel(args.to_owned())), //test
+            ("default-yes", _) => Ok(DefaultYes(args.to_owned())), //test
+            ("default-no", _) => Ok(DefaultNo(args.to_owned())), //test
+            ("default-pwmngr", _) => Ok(DefaultPwmngr(args.to_owned())), //test
+            ("default-cf-visi", _) => Ok(DefaultCFVisi(args.to_owned())), //test
+            ("default-tt-visi", _) => Ok(DefaultTTVisi(args.to_owned())), //test
+            ("default-tt-hide", _) => Ok(DefaultTTHide(args.to_owned())), //test
+            ("default-capshint", _) => Ok(DefaultCapsHint(args.to_owned())), //test
+            ("touch-file", _) => Ok(TouchFile(args.to_owned())), //test
+            ("owner", _) => Ok(Owner(args.to_owned())), //test
+            ("no-grab", _) => Ok(NoGrab), //test
             ("default-prompt", _) => Ok(DefaultPrompt(args.to_owned())),
             ("allow-external-password-cache", "") => Ok(AllowExternalPasswordCache),
             (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),

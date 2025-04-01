@@ -17,7 +17,6 @@ use tracing_subscriber::{filter::{self, Targets}, fmt, prelude::*};
 use std::io::Write;
 use std::sync::Arc;
 
-
 mod assuan;
 
 #[derive(Debug, Clone)]
@@ -167,6 +166,10 @@ impl Application {
 		    Message::Result(_r) => Task::none(),
 		    Message::Input(command) =>  {
 			match command {
+			    Command::Bye => {
+				debug!("window close");
+				window::get_latest().and_then(window::close)
+			    },
 			    Command::GetPin => {
 				state.received_commands.push(command);
 				let f = apply_commands(&state.received_commands);
@@ -195,10 +198,14 @@ impl Application {
 		    Message::ButtonOkPressed =>  {
 			let passphrase = state.passphrase.clone();
 			*self = Application::Waiting(WaitingState::default());
-			return Task::perform(perform_response(Response::Data(passphrase)), Message::Result)
+			// return Task::perform(perform_response(Response::Data(passphrase)), Message::Result).then(perform_response(Response::Ok)).map(Message::Result)
+			Task::future(perform_response(Response::Data(passphrase)))
+			    .then( |x| Task::future(perform_response(Response::Ok)))
+			    .map(Message::Result)
 		    }
 		    Message::ButtonCancelPressed => Task::none(),
 		    Message::Result(_) => Task::none(),
+		    Message::Input(command) => Task::none(),
 		    _ => Task::none(),
 		}
 	    }
@@ -207,7 +214,7 @@ impl Application {
 
     fn view(&self) -> Element<Message> {
 	match self {
-	    Application::Waiting(_state) => text("hello?").into(),
+	    Application::Waiting(_state) => row![].into(),
 	    Application::Display(state) => {
 		container(
 		    column![]
@@ -272,7 +279,7 @@ fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> 
 
 
 	while let Some(line) = lines.next_line().await? {
-	    debug!(line=?line, "raw");
+	    debug!(line=?line, "input");
 
 	    let command = Command::try_from(line)?;
 	    output.send(command).await;
@@ -285,6 +292,7 @@ fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> 
 async fn perform_response(response: Response) -> Result<(), ZuulErr> {
     let mut stdout = std::io::stdout();
     let mut writer = BufWriter::new(&stdout);
+    debug!("output: {}", response);
     writeln!(writer, "{}", response).map_err(|_|  ZuulErr::Output)?;
     writer.flush().map_err(|_|  ZuulErr::Output)?;
 
@@ -292,7 +300,7 @@ async fn perform_response(response: Response) -> Result<(), ZuulErr> {
 }
 
 fn configure_logging() {
-    let file = File::create("debug.log").unwrap();
+    let file = File::create("/tmp/debug.log").unwrap();
     let output = fmt::layer()
 	.with_writer(Arc::new(file));
 
