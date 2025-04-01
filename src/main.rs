@@ -1,8 +1,8 @@
-use std::{fs::File, io::{BufWriter, ErrorKind}};
+use std::io::{BufWriter, ErrorKind};
 
 use assuan::{Command, ParseErr, Response};
 use iced::{
-    futures::Stream, widget::{button, column, container, horizontal_space, row, text, text_input}, window::{self, settings::PlatformSpecific, Event, Id, Position}, Element, Task
+    futures::Stream, widget::{button, column, container, horizontal_space, row, text, text_input}, window::{self, settings::PlatformSpecific, Position}, Element, Task
 };
 use iced::futures::sink::SinkExt;
 use iced::Subscription;
@@ -10,11 +10,7 @@ use iced::stream;
 use iced::Theme;
 use tokio::io::BufReader;
 use tokio::io::AsyncBufReadExt;
-use tokio::io::AsyncWriteExt;
-use tracing::{debug, info, Level};
-use tracing_subscriber::{filter::Targets, fmt, prelude::*};
 use std::io::Write;
-use std::sync::Arc;
 
 mod assuan;
 
@@ -54,9 +50,9 @@ enum Message {
     ButtonOkPressed,
     ButtonCancelPressed,
     Input(Command),
-    WindowEvent(Id, Event),
+    // WindowEvent(Id, Event),
     Result(Result<(), ZuulErr>),
-    Fatal(ZuulErr),
+    Fatal,
 }
 
 struct Form {
@@ -166,7 +162,6 @@ impl Application {
 		    Message::Input(command) =>  {
 			match command {
 			    Command::Bye => {
-				debug!("window close");
 				window::get_latest().and_then(window::close)
 			    },
 			    Command::GetPin => {
@@ -199,12 +194,12 @@ impl Application {
 			*self = Application::Waiting(WaitingState::default());
 			// return Task::perform(perform_response(Response::Data(passphrase)), Message::Result).then(perform_response(Response::Ok)).map(Message::Result)
 			Task::future(perform_response(Response::Data(passphrase)))
-			    .then( |x| Task::future(perform_response(Response::Ok)))
+			    .then(|_| Task::future(perform_response(Response::Ok)))
 			    .map(Message::Result)
 		    }
 		    Message::ButtonCancelPressed => Task::none(),
 		    Message::Result(_) => Task::none(),
-		    Message::Input(command) => Task::none(),
+		    Message::Input(_command) => Task::none(),
 		    _ => Task::none(),
 		}
 	    }
@@ -244,14 +239,14 @@ impl Application {
 
     fn subscription(&self) -> Subscription<Message> {
 	Subscription::batch(
-	    vec![subscribe_to_commands(), subscribe_to_window_events(),]
+	    vec![subscribe_to_commands()]
 	)
     }
 }
 
-fn subscribe_to_window_events() -> Subscription<Message> {
-    window::events().map( |(id, event)| Message::WindowEvent(id, event))
-}
+// fn subscribe_to_window_events() -> Subscription<Message> {
+//     window::events().map( |(id, event)| Message::WindowEvent(id, event))
+// }
 
 fn subscribe_to_commands() -> Subscription<Message>{
     Subscription::run_with_id(
@@ -260,7 +255,7 @@ fn subscribe_to_commands() -> Subscription<Message>{
     ).map(|e| {
 	match e {
 	    Ok(c) => Message::Input(c),
-	    Err(e) => Message::Fatal(e),
+	    Err(_) => Message::Fatal,
 	}
     })
 }
@@ -271,17 +266,15 @@ fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> 
 	let buf = BufReader::new(stdin);
 	let mut lines = buf.lines();
 
-	let mut stdout = std::io::stdout();
+	let stdout = std::io::stdout();
 	let mut writer = BufWriter::new(&stdout);
-	writeln!(writer, "{}", Response::OkHello).map_err(|_|  ZuulErr::Output)?;
+	writeln!(writer, "{}", Response::OkHello.to_pinentry()).map_err(|_|  ZuulErr::Output)?;
 	writer.flush().map_err(|_|  ZuulErr::Output)?;
 
 
 	while let Some(line) = lines.next_line().await? {
-	    debug!(line=?line, "input");
-
 	    let command = Command::try_from(line)?;
-	    output.send(command).await;
+	    let _ = output.send(command).await;
 	}
 
 	Ok(())
@@ -289,7 +282,7 @@ fn read_external_commands_input() -> impl Stream<Item=Result<Command, ZuulErr>> 
 }
 
 async fn perform_response(response: Response) -> Result<(), ZuulErr> {
-    let mut stdout = std::io::stdout();
+    let stdout = std::io::stdout();
     let mut writer = BufWriter::new(&stdout);
     writeln!(writer, "{}", response.to_pinentry()).map_err(|_|  ZuulErr::Output)?;
     writer.flush().map_err(|_|  ZuulErr::Output)?;
@@ -297,24 +290,7 @@ async fn perform_response(response: Response) -> Result<(), ZuulErr> {
     Ok(())
 }
 
-fn configure_logging() {
-    let file = File::create("/tmp/debug.log").unwrap();
-    let output = fmt::layer()
-	.with_writer(Arc::new(file));
-
-    tracing_subscriber::registry()
-        .with(
-	    output.with_filter(Targets::default().with_target("zuul", Level::DEBUG).with_default(Level::INFO))
-	)
-        .init();
-}
-
 fn main() -> iced::Result {
-    configure_logging();
-
-    info!("starting zuul");
-
-
     iced::application(Application::title, Application::update, Application::view)
         .window(iced::window::Settings{
 	    position: Position::Centered,
