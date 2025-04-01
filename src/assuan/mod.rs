@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+//
+// SPDX-License-Identifier: MIT
+
 use std::time::Duration;
 
 const LINE_LIMITS: usize = 1000;

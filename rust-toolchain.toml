@@ -1,2 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+#
+# SPDX-License-Identifier: MIT
+
 [toolchain]
 channel = "1.85.0"

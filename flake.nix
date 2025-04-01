@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+#
+# SPDX-License-Identifier: MIT
+
 {
   description = "paranormal - ain't afraid of no ghost";
 
@@ -67,6 +71,7 @@
             pkgs.rust-analyzer
             pkgs.wayland 
             pkgs.vulkan-loader
+            pkgs.reuse
             # zbus_xmlgen
           ];
 

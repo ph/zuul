@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+#
+# SPDX-License-Identifier: MIT
+
 [package]
 name = "zuul"
 version = "0.1.0"
