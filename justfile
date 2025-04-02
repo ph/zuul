@@ -13,3 +13,5 @@ test:
 
 check:
 	reuse lint
+	cargo clippy --all --all-features --tests -- -D warnings
+	cargo fmt --all --check
