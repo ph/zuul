@@ -302,7 +302,13 @@ async fn perform_response(response: Response) -> Result<(), ZuulErr> {
 fn main() -> iced::Result {
     iced::application(Application::title, Application::update, Application::view)
         .window(iced::window::Settings {
+            decorations: false,
+            size: (400.0, 120.0).into(),
+            min_size: Some((400.0, 115.0).into()),
+            max_size: Some((400.0, 180.0).into()),
             position: Position::Centered,
+            resizable: false,
+            level: window::Level::AlwaysOnTop,
             platform_specific: PlatformSpecific {
                 application_id: String::from("zuul"),
                 override_redirect: true,
@@ -310,7 +316,6 @@ fn main() -> iced::Result {
             ..Default::default()
         })
         .theme(Application::theme)
-        .window_size((400.0, 400.0))
         .subscription(Application::subscription)
         .run_with(Application::new)
 }
