@@ -148,7 +148,7 @@ impl Application {
                 title: "".to_string(),
                 received_commands: Vec::new(),
             }),
-            Task::none(),
+            window::get_latest().and_then(window::gain_focus),
         )
     }
 
