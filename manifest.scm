@@ -9,6 +9,7 @@
 	     (gnu packages xdisorg)
 	     (gnu packages pkg-config)
 	     (gnu packages xorg)
+	     (gnu packages rust-apps)
 	     (rusty rust))
 
 (packages->manifest (list
@@ -18,6 +19,7 @@
 		     ;; `(,rust-next "rust-src")
 		     ;; `(,rust-next "tools")
 		     wayland-protocols
+			just
 		     pkg-config
 		     wayland
 		     wlroots

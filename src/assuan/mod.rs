@@ -43,11 +43,11 @@ pub enum Response {
 
 impl core::fmt::Debug for Response {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-	match self {
-	    Response::Ok => write!(f, "OK"),
-	    Response::OkHello => write!(f, "OK Please go ahead"),
-	    Response::Data(_) => write!(f, "D <SECURE>"),
-	}
+        match self {
+            Response::Ok => write!(f, "OK"),
+            Response::OkHello => write!(f, "OK Please go ahead"),
+            Response::Data(_) => write!(f, "D <SECURE>"),
+        }
     }
 }
 
@@ -63,11 +63,11 @@ impl std::fmt::Display for Response {
 
 impl Response {
     pub fn to_pinentry(&self) -> String {
-	match self {
-	    Response::Ok => "OK".to_string(),
-	    Response::OkHello => "OK Please go ahead".to_string(),
-	    Response::Data(d) => format!("D {}", d), // This is need to be escaped
-	}
+        match self {
+            Response::Ok => "OK".to_string(),
+            Response::OkHello => "OK Please go ahead".to_string(),
+            Response::Data(d) => format!("D {}", d), // This is need to be escaped
+        }
     }
 }
 
@@ -109,8 +109,8 @@ impl TryFrom<String> for Command {
             return Err(ParseErr::Empty);
         }
 
-        if value.as_bytes().len() > LINE_LIMITS {
-            return Err(ParseErr::StringTooLong(value.as_bytes().len()));
+        if value.len() > LINE_LIMITS {
+            return Err(ParseErr::StringTooLong(value.len()));
         }
 
         let (c, remainder) = match value.split_once(' ') {
@@ -211,16 +211,16 @@ impl TryFrom<&str> for OptionArgs {
             ("lc-messages", _) => Ok(LcMessages(args.to_owned())), //test
             ("default-ok", _) => Ok(DefaultOk(args.to_owned())),
             ("default-cancel", _) => Ok(DefaultCancel(args.to_owned())), //test
-            ("default-yes", _) => Ok(DefaultYes(args.to_owned())), //test
-            ("default-no", _) => Ok(DefaultNo(args.to_owned())), //test
+            ("default-yes", _) => Ok(DefaultYes(args.to_owned())),       //test
+            ("default-no", _) => Ok(DefaultNo(args.to_owned())),         //test
             ("default-pwmngr", _) => Ok(DefaultPwmngr(args.to_owned())), //test
             ("default-cf-visi", _) => Ok(DefaultCFVisi(args.to_owned())), //test
             ("default-tt-visi", _) => Ok(DefaultTTVisi(args.to_owned())), //test
             ("default-tt-hide", _) => Ok(DefaultTTHide(args.to_owned())), //test
             ("default-capshint", _) => Ok(DefaultCapsHint(args.to_owned())), //test
-            ("touch-file", _) => Ok(TouchFile(args.to_owned())), //test
-            ("owner", _) => Ok(Owner(args.to_owned())), //test
-            ("no-grab", _) => Ok(NoGrab), //test
+            ("touch-file", _) => Ok(TouchFile(args.to_owned())),         //test
+            ("owner", _) => Ok(Owner(args.to_owned())),                  //test
+            ("no-grab", _) => Ok(NoGrab),                                //test
             ("default-prompt", _) => Ok(DefaultPrompt(args.to_owned())),
             ("allow-external-password-cache", "") => Ok(AllowExternalPasswordCache),
             (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),
