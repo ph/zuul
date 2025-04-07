@@ -8,8 +8,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-iced = { version = "0.13.1", features = ["tokio", "advanced"] }
-tokio = { version = "1.44.1", features = ["io-util", "tokio-macros", "io-std"] }
+libcosmic = { git = "https://github.com/pop-os/libcosmic", default-features = false, features = [
+    "autosize",
+    "a11y",
+    "winit",
+    "multi-window",
+    "wayland",
+    "tokio",
+] }
 tracing = "0.1.41"
 tracing-appender = "0.2.3"
 tracing-subscriber = "0.3.19"
