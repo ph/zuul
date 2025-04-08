@@ -3,15 +3,16 @@
 # SPDX-License-Identifier: MIT
 
 {
-  description = "paranormal - ain't afraid of no ghost";
+  description = "zuul";
 
   inputs = {
     nixpkgs.url      = "github:NixOS/nixpkgs/nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url  = "github:numtide/flake-utils";
+    cosmic-icons.url  = "github:pop-os/cosmic-icons";
   };
 
-  outputs = { self, nixpkgs, rust-overlay, flake-utils }:
+  outputs = { self, nixpkgs, rust-overlay, flake-utils, cosmic-icons }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [ (import rust-overlay) ];
@@ -22,39 +23,6 @@
 
         rustVersion = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
-        # zbus_xmlgen =
-        #   let
-        #     inherit (pkgs) lib fetchFromGitHub rustPlatform;
-        #   in 
-        #     rustPlatform.buildRustPackage rec {
-        #       pname = "zbus_xmlgen";
-        #       version = "5.1.0";
-
-        #       src = fetchFromGitHub {
-        #         leaveDotGit = true;
-        #         owner = "dbus2";
-        #         repo = "zbus";
-        #         rev = "zbus_xmlgen-${version}";
-        #         hahs = "sha256-d1n2YlOHdimMTznSTBVd4NiHt/P9Hln7+3BMSwAcSUM=";
-        #       };
-        #       cargoBuildFlags = "-p zbus_xmlgen";
-
-        #       # Disable running the tests, a lot of them are failing, I believe it's
-        #       # because of my environment where systemd doesn't exists and dbus is handled
-        #       # by shepherd.
-        #       doCheck = false;
-              
-        #       useFetchCargoVendor = true;
-        #       # source_route = "${pname}";
-        #       cargoHash = "sha256-qagwNOiQjTxQ5m8MHI9PjhzlXm1zhJajVz6iIyIaWz4=";
-
-        #       meta = {
-        #         description = "D-Bus XML interface code generator";
-        #         homepage = "https://github.com/dbus2/zbus";
-        #         license = lib.licenses.unlicense;
-        #         maintainers = [ ];
-        #       };
-        #     };
       in {
         devShell = pkgs.mkShell rec {
           buildInputs = [
@@ -70,9 +38,11 @@
             pkgs.pkg-config
             pkgs.rust-analyzer
             pkgs.wayland 
+            pkgs.desktop-file-utils
             pkgs.vulkan-loader
             pkgs.reuse
             pkgs.just
+            cosmic-icons.packages.x86_64-linux.default
             # zbus_xmlgen
           ];
 

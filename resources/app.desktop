@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Zuul
+Comment=Zuul's pinentry
+Type=Application
+Icon=org.heyk.Zuul
+Exec=zuul %F
+Terminal=false
+StartupNotify=true
+Categories=COSMIC
+Keywords=COSMIC
+MimeType=

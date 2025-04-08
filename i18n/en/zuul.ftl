@@ -1,0 +1,2 @@
+title = Zuul
+PIN = PIN
