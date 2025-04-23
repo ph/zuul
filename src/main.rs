@@ -22,8 +22,6 @@ use tokio::io::BufReader;
 
 static INPUT_PASSPHRASE_ID: &str = "INPUT_PASSPHRASE_ID";
 
-mod assuan;
-
 #[derive(Debug, Clone)]
 enum ZuulErr {
     Input(ErrorKind),

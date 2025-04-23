@@ -7,9 +7,14 @@ name = "zuul"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+resolver = "2"
+members = ["crates/assuan"]
+
 [dependencies]
 iced = { version = "0.13.1", features = ["tokio", "advanced"] }
 tokio = { version = "1.44.1", features = ["io-util", "tokio-macros", "io-std"] }
 tracing = "0.1.41"
 tracing-appender = "0.2.3"
 tracing-subscriber = "0.3.19"
+assuan = { path = "crates/assuan" }
