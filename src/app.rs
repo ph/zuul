@@ -8,13 +8,16 @@ use cosmic::cosmic_theme;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
 use cosmic::iced::{Alignment, Border, Color, Length, Shadow, Subscription};
+use cosmic::iced_widget::row;
 use cosmic::prelude::*;
 use cosmic::theme::{self, Button, Container};
+use cosmic::widget::autosize;
+use cosmic::widget::text::body;
 use cosmic::widget::text_input::StyleSheet;
 use cosmic::widget::{
-    self, autosize, column, container, icon, id_container, menu, nav_bar, text_input,
-    vertical_space, Column,
+    self, column, container, icon, id_container, menu, nav_bar, text_input, vertical_space, Column,
 };
+use cosmic::widget::{button, text};
 use futures_util::SinkExt;
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -62,7 +65,6 @@ impl cosmic::Application for AppModel {
         &mut self.core
     }
 
-    /// Initializes the application with any given flags and startup commands.
     fn init(
         core: cosmic::Core,
         _flags: Self::Flags,
@@ -88,48 +90,48 @@ impl cosmic::Application for AppModel {
     }
 
     fn view(&self) -> Element<Self::Message> {
-        let pin = text_input("placeholder", "yoodi").style(cosmic::theme::TextInput::Custom {
-            active: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
-            error: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
-            hovered: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
-            focused: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
-            disabled: Box::new(|theme| theme.disabled(&cosmic::theme::TextInput::Inline)),
-        });
+        // let pin = text_input("placeholder", "yoodi").style(cosmic::theme::TextInput::Custom {
+        //     active: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
+        //     error: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
+        //     hovered: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
+        //     focused: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
+        //     disabled: Box::new(|theme| theme.disabled(&cosmic::theme::TextInput::Inline)),
+        // });
 
-        let content = widget::column()
+        let label_pin = text("PIN");
+
+        let pin = text_input::secure_input("placeholder", "myvalue", Some(Message::Hello), true)
+            .editing(true);
+
+        let description = text(
+            r#"bonjour la famille
+Toute la famille va bien
+Super la vie."#,
+        );
+
+        let actions = row![button::custom(text("cancel!")), button::custom(text("OK!"))];
+
+        let content = Column::new()
+            .push(label_pin)
             .push(pin)
-            .max_width(600)
-            .width(Length::Shrink)
-            .height(Length::Shrink)
-            .spacing(16);
+            .push(description)
+            .push(actions);
 
-        let window = Column::new()
-            .push(vertical_space().height(Length::Fixed(16.)))
-            .push(
-                container(id_container(content, MAIN_ID.clone()))
-                    .width(Length::Shrink)
-                    .height(Length::Shrink)
-                    .class(Container::Custom(Box::new(|theme| container::Style {
-                        text_color: Some(theme.cosmic().on_bg_color().into()),
-                        icon_color: Some(theme.cosmic().on_bg_color().into()),
-                        background: Some(Color::from(theme.cosmic().background.base).into()),
-                        border: Border {
-                            radius: theme.cosmic().corner_radii.radius_m.into(),
-                            width: 1.0,
-                            color: theme.cosmic().bg_divider().into(),
-                        },
-                        shadow: Shadow::default(),
-                    })))
-                    .padding([24, 32]),
-            );
+        let window = Column::new().push(
+            container(id_container(content, MAIN_ID.clone()))
+                .width(Length::Shrink)
+                .height(Length::Shrink)
+                .padding([24, 24]),
+        );
 
-        Element::from(autosize::autosize(window, AUTOSIZE_ID.clone()))
+        autosize::autosize(window, AUTOSIZE_ID.clone())
+            .min_width(200.)
+            .min_height(100.)
+            .max_width(300.)
+            .max_height(1920.)
+            .into()
     }
 
-    /// Handles messages emitted by the application and its widgets.
-    ///
-    /// Tasks may be returned for asynchronous execution of code in the background
-    /// on the application's async runtime.
     fn update(&mut self, message: Self::Message) -> Task<cosmic::Action<Self::Message>> {
         Task::none()
     }
