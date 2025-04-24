@@ -4,7 +4,6 @@ use crate::config::Config;
 use crate::fl;
 use cosmic::app::{context_drawer, CosmicFlags};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
-use cosmic::cosmic_theme;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
 use cosmic::iced::{Alignment, Border, Color, Length, Shadow, Subscription};
@@ -19,6 +18,7 @@ use cosmic::widget::{
     self, column, container, icon, id_container, menu, nav_bar, text_input, vertical_space, Column,
 };
 use cosmic::widget::{button, text};
+use cosmic::{cosmic_theme, surface};
 use futures_util::SinkExt;
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -36,14 +36,27 @@ pub struct Zuul {
     core: cosmic::Core,
     // Configuration data that persists between application runs.
     config: Config,
+    state: State,
 }
 
 /// Messages emitted by the application and its widgets.
 #[derive(Debug, Clone)]
 pub enum Message {
+    Ready,
+    // Surface(surface::Action),
+
+    //
     OnPassphraseChange(String),
     OnPassphraseSubmit(String),
     TogglePassphraseVisibility(bool),
+}
+
+#[derive(Debug, Clone, Default)]
+pub enum State {
+    #[default]
+    WaitingToBeShow,
+    Show,
+    WaitingValidation,
 }
 
 #[derive(Debug, Clone)]
@@ -66,17 +79,11 @@ impl CosmicFlags for Args {
     type Args = Vec<String>;
 }
 
-/// Create a COSMIC application from the app model
 impl cosmic::Application for Zuul {
     type Executor = cosmic::executor::single::Executor;
-
-    /// Data that your application receives to its init method.
     type Flags = Args;
-
-    /// Messages which the application and its widgets will emit.
     type Message = Message;
 
-    /// Unique identifier in RDNN (reverse domain name notation) format.
     const APP_ID: &'static str = "org.heyk.Zuul";
 
     fn core(&self) -> &cosmic::Core {
@@ -87,11 +94,9 @@ impl cosmic::Application for Zuul {
         &mut self.core
     }
 
-    fn init(
-        core: cosmic::Core,
-        _flags: Self::Flags,
-    ) -> (Self, Task<cosmic::Action<Self::Message>>) {
+    fn init(core: cosmic::Core, flags: Self::Flags) -> (Self, cosmic::app::Task<Self::Message>) {
         let mut app = Zuul {
+            state: State::WaitingToBeShow,
             core,
             // Optional configuration file for an application.
             config: cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
@@ -116,14 +121,6 @@ impl cosmic::Application for Zuul {
     }
 
     fn view_window(&self, _id: SurfaceId) -> Element<Self::Message> {
-        // let pin = text_input("placeholder", "yoodi").style(cosmic::theme::TextInput::Custom {
-        //     active: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
-        //     error: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
-        //     hovered: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
-        //     focused: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
-        //     disabled: Box::new(|theme| theme.disabled(&cosmic::theme::TextInput::Inline)),
-        // });
-
         let label_pin = text("PIN");
 
         let pin = text_input::secure_input("placeholder", "myvalue", None, true)
@@ -150,8 +147,6 @@ Super la vie."#,
             .height(Length::Shrink)
             .padding([24, 24]);
 
-        // .max_height(300.)
-        // .min_height(150.)
         autosize::autosize(window, AUTOSIZE_ID.clone())
             .auto_height(true)
             .min_width(300.)
@@ -160,7 +155,18 @@ Super la vie."#,
             .into()
     }
 
-    fn update(&mut self, message: Self::Message) -> Task<cosmic::Action<Self::Message>> {
+    fn update(&mut self, message: Self::Message) -> cosmic::app::Task<Self::Message> {
+        match message {
+            Message::Ready => Task::none(),
+            Message::OnPassphraseChange(_) => Task::none(),
+            Message::OnPassphraseSubmit(_) => Task::none(),
+            Message::TogglePassphraseVisibility(_) => Task::none(),
+        }
+    }
+}
+
+impl Zuul {
+    fn make_visible(&self) -> Task<Message> {
         Task::none()
     }
 }
