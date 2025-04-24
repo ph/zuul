@@ -1,3 +1,4 @@
+use app::Args;
 // SPDX-License-Identifier: {{ license }}
 use tracing::info;
 
@@ -17,15 +18,18 @@ fn main() -> cosmic::iced::Result {
     i18n::init(&requested_languages);
 
     // Settings for configuring the application window and iced runtime.
-    let settings = cosmic::app::Settings::default().size_limits(
-        cosmic::iced::Limits::NONE
-            .min_width(360.0)
-            .min_height(180.0),
-    );
+    let settings = cosmic::app::Settings::default()
+        .antialiasing(true)
+        .client_decorations(true)
+        .default_text_size(16.0)
+        .no_main_window(true)
+        .exit_on_close(true)
+        .debug(true);
 
     // Starts the application's event loop with `()` as the application's flags.
-    cosmic::app::run::<app::Zuul>(settings, ())
+    cosmic::app::run_single_instance::<app::Zuul>(settings, Args {})
 }
+
 fn init_logging() {
     use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 

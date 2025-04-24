@@ -2,12 +2,13 @@
 
 use crate::config::Config;
 use crate::fl;
-use cosmic::app::context_drawer;
+use cosmic::app::{context_drawer, CosmicFlags};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::cosmic_theme;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
 use cosmic::iced::{Alignment, Border, Color, Length, Shadow, Subscription};
+use cosmic::iced_runtime::core::window::{Event as WindowEvent, Id as SurfaceId};
 use cosmic::iced_widget::row;
 use cosmic::prelude::*;
 use cosmic::theme::{self, Button, Container};
@@ -45,13 +46,32 @@ pub enum Message {
     TogglePassphraseVisibility(bool),
 }
 
+#[derive(Debug, Clone)]
+pub enum ZuulTasks {
+    Open,
+}
+
+impl std::fmt::Display for ZuulTasks {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ZuulTasks::Open => write!(f, "open"),
+        }
+    }
+}
+
+pub struct Args {}
+
+impl CosmicFlags for Args {
+    type SubCommand = ZuulTasks;
+    type Args = Vec<String>;
+}
+
 /// Create a COSMIC application from the app model
 impl cosmic::Application for Zuul {
-    /// The async executor that will be used to run your application's commands.
-    type Executor = cosmic::executor::Default;
+    type Executor = cosmic::executor::single::Executor;
 
     /// Data that your application receives to its init method.
-    type Flags = ();
+    type Flags = Args;
 
     /// Messages which the application and its widgets will emit.
     type Message = Message;
@@ -92,6 +112,10 @@ impl cosmic::Application for Zuul {
     }
 
     fn view(&self) -> Element<Self::Message> {
+        unreachable!("No main window")
+    }
+
+    fn view_window(&self, _id: SurfaceId) -> Element<Self::Message> {
         // let pin = text_input("placeholder", "yoodi").style(cosmic::theme::TextInput::Custom {
         //     active: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
         //     error: Box::new(|theme| theme.focused(&cosmic::theme::TextInput::Inline)),
@@ -104,7 +128,8 @@ impl cosmic::Application for Zuul {
 
         let pin = text_input::secure_input("placeholder", "myvalue", None, true)
             .on_input(Message::OnPassphraseChange)
-            .editing(true);
+            .editing(true)
+            .always_active();
 
         let description = text(
             r#"bonjour la famille
@@ -120,12 +145,10 @@ Super la vie."#,
             .push(description.align_y(Vertical::Center))
             .push(actions);
 
-        let window = Column::new().push(
-            container(id_container(content, MAIN_ID.clone()))
-                .width(Length::Shrink)
-                .height(Length::Shrink)
-                .padding([24, 24]),
-        );
+        let window = container(id_container(content, MAIN_ID.clone()))
+            .width(Length::Shrink)
+            .height(Length::Shrink)
+            .padding([24, 24]);
 
         // .max_height(300.)
         // .min_height(150.)
