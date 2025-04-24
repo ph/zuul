@@ -16,6 +16,9 @@ open = "5.3.0"
 rust-embed = "8.5.0"
 tokio = { version = "1.41.0", features = ["full"] }
 freedesktop-icons = { package = "cosmic-freedesktop-icons", git = "https://github.com/pop-os/freedesktop-icons" }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tracing-journald = "0.3.1"
+tracing = "0.1.41"
 
 [dependencies.i18n-embed]
 version = "0.15"
