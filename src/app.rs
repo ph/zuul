@@ -30,7 +30,7 @@ const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps
 
 /// The application model stores app-specific state used to describe its interface and
 /// drive its logic.
-pub struct AppModel {
+pub struct Zuul {
     /// Application state which is managed by the COSMIC runtime.
     core: cosmic::Core,
     // Configuration data that persists between application runs.
@@ -40,11 +40,13 @@ pub struct AppModel {
 /// Messages emitted by the application and its widgets.
 #[derive(Debug, Clone)]
 pub enum Message {
-    Hello,
+    OnPassphraseChange(String),
+    OnPassphraseSubmit(String),
+    TogglePassphraseVisibility(bool),
 }
 
 /// Create a COSMIC application from the app model
-impl cosmic::Application for AppModel {
+impl cosmic::Application for Zuul {
     /// The async executor that will be used to run your application's commands.
     type Executor = cosmic::executor::Default;
 
@@ -69,7 +71,7 @@ impl cosmic::Application for AppModel {
         core: cosmic::Core,
         _flags: Self::Flags,
     ) -> (Self, Task<cosmic::Action<Self::Message>>) {
-        let mut app = AppModel {
+        let mut app = Zuul {
             core,
             // Optional configuration file for an application.
             config: cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
@@ -100,7 +102,8 @@ impl cosmic::Application for AppModel {
 
         let label_pin = text("PIN");
 
-        let pin = text_input::secure_input("placeholder", "myvalue", Some(Message::Hello), true)
+        let pin = text_input::secure_input("placeholder", "myvalue", None, true)
+            .on_input(Message::OnPassphraseChange)
             .editing(true);
 
         let description = text(
@@ -114,7 +117,7 @@ Super la vie."#,
         let content = Column::new()
             .push(label_pin)
             .push(pin)
-            .push(description)
+            .push(description.align_y(Vertical::Center))
             .push(actions);
 
         let window = Column::new().push(
@@ -124,10 +127,12 @@ Super la vie."#,
                 .padding([24, 24]),
         );
 
+        // .max_height(300.)
+        // .min_height(150.)
         autosize::autosize(window, AUTOSIZE_ID.clone())
-            .min_width(200.)
-            .min_height(100.)
-            .max_width(300.)
+            .auto_height(true)
+            .min_width(300.)
+            .max_width(400.)
             .max_height(1920.)
             .into()
     }
