@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: {{ license }}
 
 use crate::config::Config;
+use crate::error::ZuulErr;
 use crate::fl;
+use crate::subscription::read_external_commands_input;
+use assuan::{Command, Response};
 use cosmic::app::{context_drawer, CosmicFlags};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::alignment::{Horizontal, Vertical};
@@ -13,7 +16,7 @@ use cosmic::iced::platform_specific::shell::commands::{
         destroy_layer_surface, get_layer_surface, Anchor, KeyboardInteractivity, Layer,
     },
 };
-use cosmic::iced::{window, Alignment, Border, Color, Length, Shadow, Subscription};
+use cosmic::iced::{stream, window, Alignment, Border, Color, Length, Shadow, Subscription};
 use cosmic::iced_runtime::core::layout::Limits;
 use cosmic::iced_runtime::core::window::{Event as WindowEvent, Id as SurfaceId};
 use cosmic::iced_runtime::platform_specific::wayland::layer_surface::SctkLayerSurfaceSettings;
@@ -29,9 +32,13 @@ use cosmic::widget::{
 };
 use cosmic::widget::{button, text};
 use cosmic::{cosmic_theme, surface};
-use futures_util::SinkExt;
+use futures_util::io::BufWriter;
+use futures_util::{SinkExt, Stream};
 use std::collections::HashMap;
 use std::sync::LazyLock;
+use tokio::io::AsyncBufReadExt;
+use tokio::io::BufReader;
+use tracing::{error, info};
 
 static AUTOSIZE_ID: LazyLock<Id> = LazyLock::new(|| Id::new("autosize"));
 static MAIN_ID: LazyLock<Id> = LazyLock::new(|| Id::new("main"));
@@ -48,6 +55,8 @@ pub struct Zuul {
     config: Config,
     state: State,
     window_id: window::Id,
+    passphrase: String,
+    received_commands: Vec<Command>,
 }
 
 /// Messages emitted by the application and its widgets.
@@ -55,6 +64,8 @@ pub struct Zuul {
 pub enum Message {
     Ready,
     Surface(surface::Action),
+    PinentryCommand(Command),
+    Fatal,
 
     //
     OnPassphraseChange(String),
@@ -65,9 +76,8 @@ pub enum Message {
 #[derive(Debug, Clone, Default)]
 pub enum State {
     #[default]
-    WaitingToBeShow,
+    Waiting,
     Show,
-    WaitingValidation,
 }
 
 #[derive(Debug, Clone)]
@@ -107,8 +117,9 @@ impl cosmic::Application for Zuul {
 
     fn init(core: cosmic::Core, _flags: Self::Flags) -> (Self, cosmic::app::Task<Self::Message>) {
         let mut app = Zuul {
-            state: State::WaitingToBeShow,
+            state: State::Waiting,
             window_id: SurfaceId::unique(),
+            passphrase: String::new(),
             core,
             // Optional configuration file for an application.
             config: cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
@@ -125,9 +136,7 @@ impl cosmic::Application for Zuul {
                 .unwrap_or_default(),
         };
 
-        let task = app.make_visible();
-
-        (app, task)
+        (app, Task::none())
     }
 
     fn view(&self) -> Element<Self::Message> {
@@ -135,6 +144,53 @@ impl cosmic::Application for Zuul {
     }
 
     fn view_window(&self, _id: SurfaceId) -> Element<Self::Message> {
+        match self.state {
+            State::Waiting => row![].into(),
+            State::Show => self.view_form(),
+        }
+    }
+
+    fn update(&mut self, message: Self::Message) -> cosmic::app::Task<Self::Message> {
+        use Message::*;
+
+        info!(state=?self.state, message = ?message, "self.update");
+        Task::none()
+    }
+
+    fn subscription(&self) -> Subscription<Message> {
+        Subscription::batch(vec![subscribe_to_commands()])
+    }
+}
+
+pub fn subscribe_to_commands() -> Subscription<Message> {
+    Subscription::run_with_id(
+        std::any::TypeId::of::<Command>(),
+        read_external_commands_input(),
+    )
+    .map(|e| match e {
+        Ok(c) => Message::PinentryCommand(c),
+        Err(_) => Message::Fatal,
+    })
+}
+
+impl Zuul {
+    fn make_visible(&self) -> cosmic::app::Task<Message> {
+        Task::batch(vec![
+            get_layer_surface(SctkLayerSurfaceSettings {
+                id: self.window_id,
+                keyboard_interactivity: KeyboardInteractivity::OnDemand,
+                layer: Layer::Top,
+                namespace: "zuul".into(),
+                size: None,
+                size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
+                exclusive_zone: -1,
+                ..Default::default()
+            }),
+            overlap_notify(self.window_id, true),
+        ])
+    }
+
+    fn view_form(&self) -> Element<Message> {
         let label_pin = text("PIN");
 
         let pin = text_input::secure_input("placeholder", "myvalue", None, true)
@@ -179,37 +235,15 @@ Super la vie."#,
             .max_height(1920.)
             .into()
     }
-
-    fn update(&mut self, message: Self::Message) -> cosmic::app::Task<Self::Message> {
-        use Message::*;
-
-        match message {
-            Ready => {}
-            Surface(s) => {
-                return cosmic::task::message(cosmic::Action::Cosmic(cosmic::app::Action::Surface(
-                    s,
-                )))
-            }
-            _ => {}
-        }
-        Task::none()
-    }
 }
 
-impl Zuul {
-    fn make_visible(&self) -> cosmic::app::Task<Message> {
-        Task::batch(vec![
-            get_layer_surface(SctkLayerSurfaceSettings {
-                id: self.window_id,
-                keyboard_interactivity: KeyboardInteractivity::OnDemand,
-                layer: Layer::Top,
-                namespace: "zuul".into(),
-                size: None,
-                size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
-                exclusive_zone: -1,
-                ..Default::default()
-            }),
-            overlap_notify(self.window_id, true),
-        ])
-    }
-}
+// match message {
+//     Ready => {}
+//     Surface(s) => {
+//         return cosmic::task::message(cosmic::Action::Cosmic(
+//             cosmic::app::Action::Surface(s),
+//         ));
+//     }
+//     _ => {}
+// }
+// Task::none()

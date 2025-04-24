@@ -3,7 +3,9 @@ use tracing::info;
 
 mod app;
 mod config;
+mod error;
 mod i18n;
+mod subscription;
 
 fn main() -> cosmic::iced::Result {
     init_logging();

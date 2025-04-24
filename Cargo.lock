@@ -6,6 +6,7 @@ version = 4
 name = "Zuul"
 version = "0.1.0"
 dependencies = [
+ "assuan",
  "cosmic-freedesktop-icons",
  "futures-util",
  "i18n-embed",
@@ -297,6 +298,10 @@ dependencies = [
  "wayland-protocols",
  "zbus 4.4.0",
 ]
+
+[[package]]
+name = "assuan"
+version = "0.1.0"
 
 [[package]]
 name = "async-broadcast"
