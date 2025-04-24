@@ -6,9 +6,19 @@ use cosmic::app::{context_drawer, CosmicFlags};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
-use cosmic::iced::{Alignment, Border, Color, Length, Shadow, Subscription};
+use cosmic::iced::platform_specific::shell::commands::{
+    self,
+    activation::request_token,
+    layer_surface::{
+        destroy_layer_surface, get_layer_surface, Anchor, KeyboardInteractivity, Layer,
+    },
+};
+use cosmic::iced::{window, Alignment, Border, Color, Length, Shadow, Subscription};
+use cosmic::iced_runtime::core::layout::Limits;
 use cosmic::iced_runtime::core::window::{Event as WindowEvent, Id as SurfaceId};
+use cosmic::iced_runtime::platform_specific::wayland::layer_surface::SctkLayerSurfaceSettings;
 use cosmic::iced_widget::row;
+use cosmic::iced_winit::commands::overlap_notify::overlap_notify;
 use cosmic::prelude::*;
 use cosmic::theme::{self, Button, Container};
 use cosmic::widget::autosize;
@@ -37,13 +47,14 @@ pub struct Zuul {
     // Configuration data that persists between application runs.
     config: Config,
     state: State,
+    window_id: window::Id,
 }
 
 /// Messages emitted by the application and its widgets.
 #[derive(Debug, Clone)]
 pub enum Message {
     Ready,
-    // Surface(surface::Action),
+    Surface(surface::Action),
 
     //
     OnPassphraseChange(String),
@@ -94,9 +105,10 @@ impl cosmic::Application for Zuul {
         &mut self.core
     }
 
-    fn init(core: cosmic::Core, flags: Self::Flags) -> (Self, cosmic::app::Task<Self::Message>) {
+    fn init(core: cosmic::Core, _flags: Self::Flags) -> (Self, cosmic::app::Task<Self::Message>) {
         let mut app = Zuul {
             state: State::WaitingToBeShow,
+            window_id: SurfaceId::unique(),
             core,
             // Optional configuration file for an application.
             config: cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
@@ -113,7 +125,9 @@ impl cosmic::Application for Zuul {
                 .unwrap_or_default(),
         };
 
-        (app, Task::none())
+        let task = app.make_visible();
+
+        (app, task)
     }
 
     fn view(&self) -> Element<Self::Message> {
@@ -156,17 +170,35 @@ Super la vie."#,
     }
 
     fn update(&mut self, message: Self::Message) -> cosmic::app::Task<Self::Message> {
+        use Message::*;
+
         match message {
-            Message::Ready => Task::none(),
-            Message::OnPassphraseChange(_) => Task::none(),
-            Message::OnPassphraseSubmit(_) => Task::none(),
-            Message::TogglePassphraseVisibility(_) => Task::none(),
+            Ready => {}
+            Surface(s) => {
+                return cosmic::task::message(cosmic::Action::Cosmic(cosmic::app::Action::Surface(
+                    s,
+                )))
+            }
+            _ => {}
         }
+        Task::none()
     }
 }
 
 impl Zuul {
-    fn make_visible(&self) -> Task<Message> {
-        Task::none()
+    fn make_visible(&self) -> cosmic::app::Task<Message> {
+        Task::batch(vec![
+            get_layer_surface(SctkLayerSurfaceSettings {
+                id: self.window_id,
+                keyboard_interactivity: KeyboardInteractivity::OnDemand,
+                layer: Layer::Top,
+                namespace: "zuul".into(),
+                size: None,
+                size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
+                exclusive_zone: -1,
+                ..Default::default()
+            }),
+            overlap_notify(self.window_id, true),
+        ])
     }
 }
