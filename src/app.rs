@@ -159,6 +159,17 @@ Super la vie."#,
         let window = container(id_container(content, MAIN_ID.clone()))
             .width(Length::Shrink)
             .height(Length::Shrink)
+            .class(Container::Custom(Box::new(|theme| container::Style {
+                text_color: Some(theme.cosmic().on_bg_color().into()),
+                icon_color: Some(theme.cosmic().on_bg_color().into()),
+                background: Some(Color::from(theme.cosmic().background.base).into()),
+                border: Border {
+                    radius: theme.cosmic().corner_radii.radius_m.into(),
+                    width: 1.0,
+                    color: theme.cosmic().bg_divider().into(),
+                },
+                shadow: Shadow::default(),
+            })))
             .padding([24, 24]);
 
         autosize::autosize(window, AUTOSIZE_ID.clone())
