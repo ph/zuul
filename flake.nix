@@ -1,85 +1,69 @@
-# SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
-#
-# SPDX-License-Identifier: MIT
-
 {
-  description = "paranormal - ain't afraid of no ghost";
+  description = "Pinentry application for the COSMIC desktop environment";
 
   inputs = {
-    nixpkgs.url      = "github:NixOS/nixpkgs/nixos-unstable";
-    rust-overlay.url = "github:oxalica/rust-overlay";
-    flake-utils.url  = "github:numtide/flake-utils";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+    nix-filter.url = "github:numtide/nix-filter";
+    crane.url = "github:ipetkov/crane";
+
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, rust-overlay, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, flake-utils, nix-filter, crane, rust-overlay,  }:
+    flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (system:
       let
         overlays = [ (import rust-overlay) ];
-
         pkgs = import nixpkgs {
           inherit system overlays;
         };
-
-        rustVersion = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-
-        # zbus_xmlgen =
-        #   let
-        #     inherit (pkgs) lib fetchFromGitHub rustPlatform;
-        #   in 
-        #     rustPlatform.buildRustPackage rec {
-        #       pname = "zbus_xmlgen";
-        #       version = "5.1.0";
-
-        #       src = fetchFromGitHub {
-        #         leaveDotGit = true;
-        #         owner = "dbus2";
-        #         repo = "zbus";
-        #         rev = "zbus_xmlgen-${version}";
-        #         hahs = "sha256-d1n2YlOHdimMTznSTBVd4NiHt/P9Hln7+3BMSwAcSUM=";
-        #       };
-        #       cargoBuildFlags = "-p zbus_xmlgen";
-
-        #       # Disable running the tests, a lot of them are failing, I believe it's
-        #       # because of my environment where systemd doesn't exists and dbus is handled
-        #       # by shepherd.
-        #       doCheck = false;
-              
-        #       useFetchCargoVendor = true;
-        #       # source_route = "${pname}";
-        #       cargoHash = "sha256-qagwNOiQjTxQ5m8MHI9PjhzlXm1zhJajVz6iIyIaWz4=";
-
-        #       meta = {
-        #         description = "D-Bus XML interface code generator";
-        #         homepage = "https://github.com/dbus2/zbus";
-        #         license = lib.licenses.unlicense;
-        #         maintainers = [ ];
-        #       };
-        #     };
-      in {
-        devShell = pkgs.mkShell rec {
-          buildInputs = [
-            (rustVersion.override { extensions = [ "rust-src" "rustfmt" "clippy" ]; })
-            pkgs.cargo-deny
-            pkgs.cmake
-            pkgs.pkg-config
-            pkgs.expat
-            pkgs.fontconfig
-            pkgs.freetype
-            pkgs.libxkbcommon
-            pkgs.lld             
-            pkgs.pkg-config
-            pkgs.rust-analyzer
-            pkgs.wayland 
-            pkgs.vulkan-loader
-            pkgs.reuse
-            pkgs.just
-            # zbus_xmlgen
+        rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+        craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
+        unfiltered = ./.;
+        src = nixpkgs.lib.fileset.toSource {
+          root = unfiltered;
+          fileset = nixpkgs.lib.fileset.unions [
+            (craneLib.fileset.commonCargoSources unfiltered)
+            (nixpkgs.lib.fileset.fileFilter (file: file.hasExt "md") unfiltered)
+            (nixpkgs.lib.fileset.maybeMissing ./resources)
+            (nixpkgs.lib.fileset.maybeMissing ./i18n)
           ];
-
-          shellHook = ''
-              export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${builtins.toString (pkgs.lib.makeLibraryPath buildInputs)}";
-            '';
-
         };
-      });
+
+        nativeBuildInputs = with pkgs; [ rustToolchain pkg-config ];
+        buildInputs = with pkgs; [
+          libxkbcommon
+          wayland
+        ];
+
+        commonArgs = {
+          inherit src buildInputs nativeBuildInputs;
+        };
+
+        cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+        bin = craneLib.buildPackage (commonArgs // {
+          inherit cargoArtifacts;
+        });
+      in
+        with pkgs;
+        {
+          packages =
+            {
+              # that way we can build `bin` specifically,
+              # but it's also the default.
+              inherit bin;
+              default = bin;
+            };
+          devShells.default = mkShell rec {
+            # instead of passing `buildInputs` / `nativeBuildInputs`,
+            # we refer to an existing derivation here
+            inputsFrom = [ bin ];
+            LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath buildInputs;
+          };
+        }
+    );
 }

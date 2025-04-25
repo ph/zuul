@@ -1,5 +1,5 @@
 [package]
-name = "Zuul"
+name = "zuul"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
@@ -9,9 +9,6 @@ repository = "https://github.com/ph/zuul"
 [workspace]
 resolver = "2"
 members = ["./crates/assuan"]
-
-[build-dependencies]
-vergen = { version = "8", features = ["git", "gitcl"] }
 
 [dependencies]
 futures-util = "0.3.31"
