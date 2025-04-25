@@ -42,9 +42,9 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
             match command {
                 Command::GetPin => {
                     let form = apply_commands(&commands);
+		    commands.clear();
                     let _ = output.send(Event::Form(form)).await;
                     reply(Response::Ok).await;
-                    return Ok(());
                 }
                 Command::Bye => {
                     let _ = output.send(Event::Bye).await;
