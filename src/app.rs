@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: {{ license }}
+// SPDX-License-Identfier: {{ license }}
 
 use crate::config::Config;
 use crate::error::ZuulErr;
@@ -68,10 +68,6 @@ pub enum Message {
     OnPassphraseSubmit(String),
     Exit,
     Result(Result<(), ZuulErr>),
-    //
-    TogglePassphraseVisibility(bool),
-    Ready,
-    Fatal,
 }
 
 #[derive(Debug, Clone)]
@@ -101,9 +97,7 @@ enum State {
 }
 
 #[derive(Default, Clone)]
-struct WaitingState {
-    received_commands: Vec<Command>,
-}
+struct WaitingState {}
 
 #[derive(Default, Clone)]
 struct DisplayState {
