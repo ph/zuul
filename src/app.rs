@@ -8,13 +8,11 @@ use cosmic::app::CosmicFlags;
 use cosmic::cosmic_theme::Spacing;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
-use cosmic::iced::platform_specific::shell::commands::{
-    layer_surface::{
-        get_layer_surface, KeyboardInteractivity, Layer,
-    },
+use cosmic::iced::keyboard::{self, key::Named, Key};
+use cosmic::iced::platform_specific::shell::commands::layer_surface::{
+    get_layer_surface, KeyboardInteractivity, Layer,
 };
 use cosmic::iced::{window, Border, Color, Length, Shadow, Subscription};
-use cosmic::iced::keyboard::{self, Key, key::Named};
 use cosmic::iced_runtime::core::layout::Limits;
 use cosmic::iced_runtime::core::window::Id as SurfaceId;
 use cosmic::iced_runtime::platform_specific::wayland::layer_surface::SctkLayerSurfaceSettings;
@@ -22,10 +20,8 @@ use cosmic::iced_widget::row;
 use cosmic::prelude::*;
 use cosmic::theme::{self, Container};
 use cosmic::widget::{autosize, divider, horizontal_space};
-use cosmic::widget::{
-    container, id_container, text_input, vertical_space, Column,
-};
 use cosmic::widget::{button, text};
+use cosmic::widget::{container, id_container, text_input, vertical_space, Column};
 use std::io::BufWriter;
 use std::io::Write;
 use std::sync::LazyLock;
@@ -121,10 +117,7 @@ impl cosmic::Application for Zuul {
     }
 
     fn view_window(&self, _id: SurfaceId) -> Element<Self::Message> {
-	let Spacing {
-	    space_s,
-	    ..
-	} = theme::active().cosmic().spacing;
+        let Spacing { space_s, .. } = theme::active().cosmic().spacing;
 
         match &self.state {
             State::Display(state) => {
@@ -137,26 +130,33 @@ impl cosmic::Application for Zuul {
                     .on_input(Message::OnPassphraseChange)
                     .on_submit(Message::OnPassphraseSubmit);
 
-                let description = state.form.description().map(|d| text(d).align_y(Vertical::Center));
+                let description = state
+                    .form
+                    .description()
+                    .map(|d| text(d).align_y(Vertical::Center));
 
-                let actions = container(row![
-		    horizontal_space().width(Length::Fill),
-		    button::standard(state.form.button_cancel())
-			.on_press(Message::ButtonCancelPressed),
-		    button::suggested(state.form.button_ok())
-			.on_press(Message::ButtonOkPressed),                            
-		].spacing(space_s)).align_x(Horizontal::Right);
+                let actions = container(
+                    row![
+                        horizontal_space().width(Length::Fill),
+                        button::standard(state.form.button_cancel())
+                            .on_press(Message::ButtonCancelPressed),
+                        button::suggested(state.form.button_ok())
+                            .on_press(Message::ButtonOkPressed),
+                    ]
+                    .spacing(space_s),
+                )
+                .align_x(Horizontal::Right);
 
                 let content = Column::new()
                     .push(prompt)
                     .push(pin)
                     .push_maybe(if description.is_some() {
-			Some(divider::horizontal::light())
-		    } else {
-			None
-		    })
-		    .push_maybe(description)
-		    .push(vertical_space().height(Length::Fixed(16.)))
+                        Some(divider::horizontal::light())
+                    } else {
+                        None
+                    })
+                    .push_maybe(description)
+                    .push(vertical_space().height(Length::Fixed(16.)))
                     .push(actions);
 
                 let window = container(id_container(content, MAIN_ID.clone()))
@@ -201,62 +201,65 @@ impl cosmic::Application for Zuul {
                 }
                 _ => {}
             },
-	    State::Display(s) => match message {
-		Message::Exit | ButtonCancelPressed => self.exit(),
-		ButtonOkPressed => {
-		    return send_passphrase(s.passphrase.clone());
-		}
-		OnPassphraseChange(passphrase) => {
-		    s.passphrase = passphrase;
-		}
-		OnPassphraseSubmit(passphrase) =>  {
-		    s.passphrase = passphrase.clone();
-		    return send_passphrase(s.passphrase.clone());
-	
-		}
-		Message::Result(r) => match r {
-		    Ok(_) => self.exit(),
-		    Err(err) => {
-			eprintln!("Error: {}", err);
-			std::process::exit(exitcode::DATAERR);
-		    }
-		}
-		_ => {}
-	    },
-	}
-	Task::none()
+            State::Display(s) => match message {
+                Message::Exit | ButtonCancelPressed => self.exit(),
+                ButtonOkPressed => {
+                    return send_passphrase(s.passphrase.clone());
+                }
+                OnPassphraseChange(passphrase) => {
+                    s.passphrase = passphrase;
+                }
+                OnPassphraseSubmit(passphrase) => {
+                    s.passphrase = passphrase.clone();
+                    return send_passphrase(s.passphrase.clone());
+                }
+                Message::Result(r) => match r {
+                    Ok(_) => self.exit(),
+                    Err(err) => {
+                        eprintln!("Error: {}", err);
+                        std::process::exit(exitcode::DATAERR);
+                    }
+                },
+                _ => {}
+            },
+        }
+        Task::none()
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        Subscription::batch(vec![subscribe_to_commands(), subscribe_to_specific_events()])
+        Subscription::batch(vec![
+            subscribe_to_commands(),
+            subscribe_to_specific_events(),
+        ])
     }
 }
 
 impl Zuul {
     fn exit(&self) {
-	std::process::exit(exitcode::OK);
+        std::process::exit(exitcode::OK);
     }
 
     fn show(&self) -> cosmic::app::Task<Message> {
-        Task::batch(vec![
-            get_layer_surface(SctkLayerSurfaceSettings {
-                id: self.window_id,
-                keyboard_interactivity: KeyboardInteractivity::OnDemand,
-                layer: Layer::Top,
-                namespace: "zuul".into(),
-                size: None,
-                size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
-                exclusive_zone: -1,
-                ..Default::default()
-            }),
-        ])
+        Task::batch(vec![get_layer_surface(SctkLayerSurfaceSettings {
+            id: self.window_id,
+            keyboard_interactivity: KeyboardInteractivity::OnDemand,
+            layer: Layer::Top,
+            namespace: "zuul".into(),
+            size: None,
+            size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
+            exclusive_zone: -1,
+            ..Default::default()
+        })])
     }
 }
 
 fn subscribe_to_specific_events() -> Subscription<Message> {
     cosmic::iced::event::listen_raw(|e, _status, _id| match e {
-	cosmic::iced::Event::Keyboard(keyboard::Event::KeyPressed { key: Key::Named(Named::Escape), .. }) => Some(Message::Exit),
-	_ => None,
+        cosmic::iced::Event::Keyboard(keyboard::Event::KeyPressed {
+            key: Key::Named(Named::Escape),
+            ..
+        }) => Some(Message::Exit),
+        _ => None,
     })
 }
 
@@ -267,7 +270,7 @@ pub fn subscribe_to_commands() -> Subscription<Message> {
     )
     .map(|e| match e {
         Ok(c) => Message::External(c),
-        Err(err) => Message::Result(Err(err))
+        Err(err) => Message::Result(Err(err)),
     })
 }
 
@@ -275,7 +278,7 @@ async fn reply(responses: Vec<Response>) -> Result<(), ZuulErr> {
     let mut stdout = std::io::stdout();
     let mut w = BufWriter::new(&mut stdout);
     for response in responses {
-	writeln!(w, "{}", response.to_pinentry()).map_err(|_| ZuulErr::Output)?;
+        writeln!(w, "{}", response.to_pinentry()).map_err(|_| ZuulErr::Output)?;
     }
 
     w.flush().map_err(|_| ZuulErr::Output)?;
@@ -284,6 +287,6 @@ async fn reply(responses: Vec<Response>) -> Result<(), ZuulErr> {
 
 fn send_passphrase(passphrase: String) -> cosmic::app::Task<Message> {
     Task::perform(reply(vec![Response::Data(passphrase), Response::Ok]), |r| {
-	cosmic::action::app(Message::Result(r))
+        cosmic::action::app(Message::Result(r))
     })
 }
