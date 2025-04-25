@@ -6,7 +6,6 @@
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
     crane.url = "github:ipetkov/crane";
-
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -16,7 +15,9 @@
   outputs = { self, nixpkgs, flake-utils, nix-filter, crane, rust-overlay,  }:
     flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (system:
       let
-        overlays = [ (import rust-overlay) ];
+        overlays = [
+          (import rust-overlay)
+        ];
         pkgs = import nixpkgs {
           inherit system overlays;
         };
@@ -63,10 +64,15 @@
               inherit bin;
               default = bin;
             };
-          devShells.default = mkShell rec {
+          devShells.default = mkShell {
             # instead of passing `buildInputs` / `nativeBuildInputs`,
             # we refer to an existing derivation here
-            inputsFrom = [ bin ];
+            inputsFrom = [
+              bin
+            ];
+
+            buildInputs = with pkgs; [ goreleaser ] ++ buildInputs;
+
             LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath buildInputs;
           };
         }
