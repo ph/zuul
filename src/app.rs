@@ -23,10 +23,10 @@ use cosmic::theme::{self, Container};
 use cosmic::widget::{autosize, horizontal_space};
 use cosmic::widget::{button, text};
 use cosmic::widget::{container, id_container, text_input, vertical_space, Column};
-use tracing::error;
 use std::io::BufWriter;
 use std::io::Write;
 use std::sync::LazyLock;
+use tracing::error;
 
 static AUTOSIZE_ID: LazyLock<Id> = LazyLock::new(|| Id::new("autosize"));
 static MAIN_ID: LazyLock<Id> = LazyLock::new(|| Id::new("main"));
@@ -83,11 +83,11 @@ enum State {
 
 impl std::fmt::Display for State {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-	match self {
-	    State::WaitingForm(_) => write!(f, "State::WaitingForm"),
-	    State::Display(_) => write!(f, "State::Display"),
-	    State::WaitingValidation => write!(f, "State::WaitingValidation"),
-	}
+        match self {
+            State::WaitingForm(_) => write!(f, "State::WaitingForm"),
+            State::Display(_) => write!(f, "State::Display"),
+            State::WaitingValidation => write!(f, "State::WaitingValidation"),
+        }
     }
 }
 
@@ -165,8 +165,8 @@ impl cosmic::Application for Zuul {
                     .push(pin)
                     .push_maybe(description)
                     .push(vertical_space().height(Length::Fixed(16.)))
-		    .push(actions)
-		    .spacing(space_s);
+                    .push(actions)
+                    .spacing(space_s);
 
                 let window = container(id_container(content, MAIN_ID.clone()))
                     .width(Length::Shrink)
@@ -201,21 +201,22 @@ impl cosmic::Application for Zuul {
             State::WaitingForm(_) | State::WaitingValidation => match message {
                 External(Event::Bye) => self.exit(),
                 External(Event::Form(form)) => {
-		    return self.transition(State::Display(DisplayState { form, ..Default::default() })); 
+                    return self
+                        .transition(State::Display(DisplayState { form, ..Default::default() }));
                 }
                 _ => {}
             },
             State::Display(s) => match message {
                 Message::Exit | ButtonCancelPressed => self.exit(),
                 ButtonOkPressed => {
-		    return self.transition(State::WaitingValidation);
+                    return self.transition(State::WaitingValidation);
                 }
                 OnPassphraseChange(passphrase) => {
                     s.passphrase = passphrase;
                 }
                 OnPassphraseSubmit(passphrase) => {
                     s.passphrase = passphrase;
-		    return self.transition(State::WaitingValidation);
+                    return self.transition(State::WaitingValidation);
                 }
                 Message::Result(r) => match r {
                     Ok(_) => self.exit(),
@@ -226,7 +227,7 @@ impl cosmic::Application for Zuul {
                 },
                 _ => {}
             },
-	}
+        }
         Task::none()
     }
 
@@ -240,23 +241,27 @@ impl cosmic::Application for Zuul {
 
 impl Zuul {
     fn transition(&mut self, new_state: State) -> cosmic::app::Task<Message> {
-	match (self.state.clone(), new_state.clone()) {
-	    (State::WaitingForm(..), State::Display(..)) | (State::WaitingValidation, State::Display(..)) => {
-		self.state = new_state;
-		return Task::batch(vec![
-		    self.show(),
-		    text_input::focus(INPUT_PASSPHRASE_ID.clone()),
-		]);
-	    }
-	    (State::Display(s), State::WaitingValidation) => {
-		self.state = new_state;
-		return Task::batch(vec![self.hide(), send_passphrase(s.passphrase.clone())]);
-	    }
-	    _ => {
-		error!("Error: This is a bug, unexpected transition from `{}` to `{new_state}`", self.state);
-		std::process::exit(exitcode::DATAERR);
-	    }
-	}
+        match (self.state.clone(), new_state.clone()) {
+            (State::WaitingForm(..), State::Display(..))
+            | (State::WaitingValidation, State::Display(..)) => {
+                self.state = new_state;
+                Task::batch(vec![
+                    self.show(),
+                    text_input::focus(INPUT_PASSPHRASE_ID.clone()),
+                ])
+            }
+            (State::Display(s), State::WaitingValidation) => {
+                self.state = new_state;
+                Task::batch(vec![self.hide(), send_passphrase(s.passphrase.clone())])
+            }
+            _ => {
+                error!(
+                    "Error: This is a bug, unexpected transition from `{}` to `{new_state}`",
+                    self.state
+                );
+                std::process::exit(exitcode::DATAERR);
+            }
+        }
     }
 
     fn exit(&self) {
@@ -277,7 +282,7 @@ impl Zuul {
     }
 
     fn hide(&self) -> cosmic::app::Task<Message> {
-	destroy_layer_surface(self.window_id)
+        destroy_layer_surface(self.window_id)
     }
 }
 
