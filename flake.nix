@@ -57,7 +57,7 @@
       in
         rec {
           overlays.default = final: prev: {
-            zuul = bin
+            zuul = bin;
           };
 
           packages = {
