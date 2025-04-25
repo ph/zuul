@@ -27,7 +27,7 @@ use cosmic::iced_widget::row;
 use cosmic::iced_winit::commands::overlap_notify::overlap_notify;
 use cosmic::prelude::*;
 use cosmic::theme::{self, Button, Container};
-use cosmic::widget::{autosize, horizontal_space};
+use cosmic::widget::{autosize, divider, horizontal_space};
 use cosmic::widget::text::body;
 use cosmic::widget::text_input::StyleSheet;
 use cosmic::widget::{
@@ -177,6 +177,11 @@ impl cosmic::Application for Zuul {
                 let content = Column::new()
                     .push(prompt)
                     .push(pin)
+                    .push_maybe(if description.is_some() {
+			Some(divider::horizontal::light())
+		    } else {
+			None
+		    })
 		    .push_maybe(description)
 		    .push(vertical_space().height(Length::Fixed(16.)))
                     .push(actions);
