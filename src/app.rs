@@ -66,6 +66,7 @@ pub enum Message {
     ButtonCancelPressed,
     OnPassphraseChange(String),
     OnPassphraseSubmit(String),
+    Exit,
     //
     TogglePassphraseVisibility(bool),
     Ready,
@@ -222,10 +223,7 @@ impl cosmic::Application for Zuul {
                 _ => {}
             },
 	    State::Display(s) => match message {
-		Message::EventOccurred(cosmic::iced::Event::Keyboard(keyboard::Event::KeyReleased {
-		    key: Key::Named(Named::Escape),
-		    ..
-		})) => self.exit(),
+		Message::Exit => self.exit(),
 		ButtonOkPressed => {
 		    reply(Response::Data(s.passphrase.clone()));
 		}
@@ -244,7 +242,7 @@ impl cosmic::Application for Zuul {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        Subscription::batch(vec![subscribe_to_commands()])
+        Subscription::batch(vec![subscribe_to_commands(), subscribe_to_keyboard_events()])
     }
 }
 
@@ -269,8 +267,12 @@ impl Zuul {
     }
 }
 
-fn subscribe_to_window_events() -> Subscription<Message> {
-    cosmic::iced::event::listen().map(Message::EventOccurred)
+fn subscribe_to_keyboard_events() -> Subscription<Message> {
+    // cosmic::iced::event::listen().map(Message::EventOccurred)
+    cosmic::iced::event::listen_raw(|e, status, id| match e {
+	cosmic::iced::Event::Keyboard(keyboard::Event::KeyPressed { key: Key::Named(Named::Escape), .. }) => Some(Message::Exit),
+	_ => None,
+    })
 }
 
 pub fn subscribe_to_commands() -> Subscription<Message> {
