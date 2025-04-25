@@ -33,7 +33,12 @@
           ];
         };
 
-        nativeBuildInputs = with pkgs; [ rustToolchain pkg-config ];
+        nativeBuildInputs = with pkgs; [
+          rustToolchain
+          pkg-config
+          autoPatchelfHook
+        ];
+
         buildInputs = with pkgs; [
           libxkbcommon
           wayland
