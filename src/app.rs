@@ -20,7 +20,7 @@ use cosmic::iced_widget::row;
 use cosmic::iced_winit::commands::layer_surface::destroy_layer_surface;
 use cosmic::prelude::*;
 use cosmic::theme::{self, Container};
-use cosmic::widget::{autosize, divider, horizontal_space};
+use cosmic::widget::{autosize, horizontal_space};
 use cosmic::widget::{button, text};
 use cosmic::widget::{container, id_container, text_input, vertical_space, Column};
 use tracing::error;
@@ -163,14 +163,10 @@ impl cosmic::Application for Zuul {
                 let content = Column::new()
                     .push(prompt)
                     .push(pin)
-                    .push_maybe(if description.is_some() {
-                        Some(divider::horizontal::light())
-                    } else {
-                        None
-                    })
-                    .push_maybe(description)
+                    .push_maybe(description())
                     .push(vertical_space().height(Length::Fixed(16.)))
-                    .push(actions);
+		    .push(actions)
+		    .spacing(space_s);
 
                 let window = container(id_container(content, MAIN_ID.clone()))
                     .width(Length::Shrink)
