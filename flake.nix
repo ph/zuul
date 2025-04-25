@@ -56,9 +56,9 @@
         });
       in
         rec {
-          overlays.default = (final: prev: {
-            zuul = prev.callPackage packages.${prev.system};
-          });
+          overlays.default = final: prev: {
+            zuul = final.callPackage packages.${prev.system};
+          };
 
           packages = {
             inherit bin;
