@@ -26,7 +26,7 @@ use cosmic::iced_widget::row;
 use cosmic::iced_winit::commands::overlap_notify::overlap_notify;
 use cosmic::prelude::*;
 use cosmic::theme::{self, Button, Container};
-use cosmic::widget::autosize;
+use cosmic::widget::{autosize, horizontal_space};
 use cosmic::widget::text::body;
 use cosmic::widget::text_input::StyleSheet;
 use cosmic::widget::{
@@ -51,10 +51,7 @@ const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps
 /// The application model stores app-specific state used to describe its interface and
 /// drive its logic.
 pub struct Zuul {
-    /// Application state which is managed by the COSMIC runtime.
     core: cosmic::Core,
-    // Configuration data that persists between application runs.
-    config: Config,
     window_id: window::Id,
     state: State,
 }
@@ -131,19 +128,6 @@ impl cosmic::Application for Zuul {
             window_id: SurfaceId::unique(),
             state: State::Waiting(WaitingState::default()),
             core,
-            // Optional configuration file for an application.
-            config: cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
-                .map(|context| match Config::get_entry(&context) {
-                    Ok(config) => config,
-                    Err((_errors, config)) => {
-                        // for why in errors {
-                        //     tracing::error!(%why, "error loading app config");
-                        // }
-
-                        config
-                    }
-                })
-                .unwrap_or_default(),
         };
 
         (app, Task::none())
@@ -171,9 +155,10 @@ impl cosmic::Application for Zuul {
                 };
 
                 let actions = container(row![
-                    button::custom(text(state.form.button_cancel()))
-                        .on_press(Message::ButtonCancelPressed),
-                    button::custom(text(state.form.button_ok())).on_press(Message::ButtonOkPressed),
+		    button::custom(text(state.form.button_cancel()))
+			.on_press(Message::ButtonCancelPressed),
+		    horizontal_space(),
+		    button::custom(text(state.form.button_ok())).on_press(Message::ButtonOkPressed),
 		]).align_x(Horizontal::Right);
 
                 let content = Column::new()
