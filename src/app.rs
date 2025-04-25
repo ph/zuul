@@ -227,7 +227,7 @@ impl cosmic::Application for Zuul {
 		    ..
 		})) => self.exit(),
 		ButtonOkPressed => {
-		    perform_response(Response::Data(s.passphrase.clone()));
+		    reply(Response::Data(s.passphrase.clone()));
 		}
 		ButtonCancelPressed => self.exit(),
 		OnPassphraseChange(passphrase) => {
@@ -235,7 +235,7 @@ impl cosmic::Application for Zuul {
 		}
 		OnPassphraseSubmit(passphrase) =>  {
 		    s.passphrase = passphrase.clone();
-		    perform_response(Response::Data(s.passphrase.clone()));
+		    reply(Response::Data(s.passphrase.clone()));
 		}
 		_ => {}
 	    },
@@ -284,7 +284,7 @@ pub fn subscribe_to_commands() -> Subscription<Message> {
     })
 }
 
-async fn perform_response(response: Response) -> Result<(), ZuulErr> {
+async fn reply(response: Response) -> Result<(), ZuulErr> {
     let mut stdout = std::io::stdout();
     let mut w = BufWriter::new(&mut stdout);
     writeln!(w, "{}", response.to_pinentry()).map_err(|_| ZuulErr::Output)?;
