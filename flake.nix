@@ -51,7 +51,7 @@
 
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-        bin = craneLib.buildPackage (commonArgs // {
+        zuul = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
         });
       in
@@ -59,16 +59,14 @@
         {
           packages =
             {
-              # that way we can build `bin` specifically,
-              # but it's also the default.
-              inherit bin;
-              default = bin;
+              inherit zuul;
+              default = zuul;
             };
           devShells.default = mkShell {
             # instead of passing `buildInputs` / `nativeBuildInputs`,
             # we refer to an existing derivation here
             inputsFrom = [
-              bin
+              zuul
             ];
 
             buildInputs = with pkgs; [ goreleaser ] ++ buildInputs;
