@@ -67,6 +67,7 @@ pub enum Message {
     OnPassphraseChange(String),
     OnPassphraseSubmit(String),
     Exit,
+    Result(Result<(), ZuulErr>),
     //
     TogglePassphraseVisibility(bool),
     Ready,
@@ -153,10 +154,11 @@ impl cosmic::Application for Zuul {
                 let prompt = text(state.form.prompt());
 
                 let pin = text_input::secure_input("", state.passphrase.clone(), None, true)
-                    .on_input(Message::OnPassphraseChange)
                     .id(INPUT_PASSPHRASE_ID.clone())
                     .editing(true)
-                    .always_active();
+                    .always_active()
+                    .on_input(Message::OnPassphraseChange)
+                    .on_submit(Message::OnPassphraseSubmit);
 
                 let description = if let Some(d) = state.form.description() {
                     Some(text(d).align_y(Vertical::Center))
@@ -208,7 +210,6 @@ impl cosmic::Application for Zuul {
 
     fn update(&mut self, message: Self::Message) -> cosmic::app::Task<Self::Message> {
         use Message::*;
-
         match &mut self.state {
             State::Waiting(s) => match message {
                 External(Event::Bye) => self.exit(),
@@ -223,17 +224,24 @@ impl cosmic::Application for Zuul {
                 _ => {}
             },
 	    State::Display(s) => match message {
-		Message::Exit => self.exit(),
+		Message::Exit | ButtonCancelPressed => self.exit(),
 		ButtonOkPressed => {
-		    reply(Response::Data(s.passphrase.clone()));
+		    return send_passphrase(s.passphrase.clone());
 		}
-		ButtonCancelPressed => self.exit(),
 		OnPassphraseChange(passphrase) => {
 		    s.passphrase = passphrase;
 		}
 		OnPassphraseSubmit(passphrase) =>  {
 		    s.passphrase = passphrase.clone();
-		    reply(Response::Data(s.passphrase.clone()));
+		    return send_passphrase(s.passphrase.clone());
+	
+		}
+		Message::Result(r) => match r {
+		    Ok(_) => self.exit(),
+		    Err(err) => {
+			eprintln!("Error: {}", err);
+			std::process::exit(exitcode::DATAERR);
+		    }
 		}
 		_ => {}
 	    },
@@ -242,13 +250,13 @@ impl cosmic::Application for Zuul {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        Subscription::batch(vec![subscribe_to_commands(), subscribe_to_keyboard_events()])
+        Subscription::batch(vec![subscribe_to_commands(), subscribe_to_specific_events()])
     }
 }
 
 impl Zuul {
     fn exit(&self) {
-	std::process::exit(0);
+	std::process::exit(exitcode::OK);
     }
 
     fn show(&self) -> cosmic::app::Task<Message> {
@@ -267,8 +275,7 @@ impl Zuul {
     }
 }
 
-fn subscribe_to_keyboard_events() -> Subscription<Message> {
-    // cosmic::iced::event::listen().map(Message::EventOccurred)
+fn subscribe_to_specific_events() -> Subscription<Message> {
     cosmic::iced::event::listen_raw(|e, status, id| match e {
 	cosmic::iced::Event::Keyboard(keyboard::Event::KeyPressed { key: Key::Named(Named::Escape), .. }) => Some(Message::Exit),
 	_ => None,
@@ -286,10 +293,19 @@ pub fn subscribe_to_commands() -> Subscription<Message> {
     })
 }
 
-async fn reply(response: Response) -> Result<(), ZuulErr> {
+async fn reply(responses: Vec<Response>) -> Result<(), ZuulErr> {
     let mut stdout = std::io::stdout();
     let mut w = BufWriter::new(&mut stdout);
-    writeln!(w, "{}", response.to_pinentry()).map_err(|_| ZuulErr::Output)?;
+    for response in responses {
+	writeln!(w, "{}", response.to_pinentry()).map_err(|_| ZuulErr::Output)?;
+    }
+
     w.flush().map_err(|_| ZuulErr::Output)?;
     Ok(())
+}
+
+fn send_passphrase(passphrase: String) -> cosmic::app::Task<Message> {
+    Task::perform(reply(vec![Response::Data(passphrase), Response::Ok]), |r| {
+	cosmic::action::app(Message::Result(r))
+    })
 }

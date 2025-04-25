@@ -24,6 +24,7 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tracing-journald = "0.3.1"
 tracing = "0.1.41"
 assuan = { path = "crates/assuan" }
+exitcode = "1.1.2"
 
 [dependencies.i18n-embed]
 version = "0.15"
