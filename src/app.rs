@@ -136,9 +136,6 @@ impl cosmic::Application for Zuul {
 
     fn view_window(&self, _id: SurfaceId) -> Element<Self::Message> {
 	let Spacing {
-	    space_none,
-	    space_xxs,
-	    space_xs,
 	    space_s,
 	    ..
 	} = theme::active().cosmic().spacing;
@@ -288,7 +285,7 @@ pub fn subscribe_to_commands() -> Subscription<Message> {
     )
     .map(|e| match e {
         Ok(c) => Message::External(c),
-        Err(_) => Message::Fatal,
+        Err(err) => Message::Result(Err(err))
     })
 }
 
