@@ -36,17 +36,14 @@ use cosmic::widget::{
 use cosmic::widget::{button, text};
 use cosmic::{cosmic_theme, surface};
 use futures_util::{SinkExt, Stream};
-use std::collections::HashMap;
 use std::io::BufWriter;
 use std::io::Write;
 use std::sync::LazyLock;
-use tracing::{error, info};
 
 static AUTOSIZE_ID: LazyLock<Id> = LazyLock::new(|| Id::new("autosize"));
 static MAIN_ID: LazyLock<Id> = LazyLock::new(|| Id::new("main"));
 static INPUT_PASSPHRASE_ID: LazyLock<Id> = LazyLock::new(|| Id::new("input_passphrase"));
 
-const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
 const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
 
 /// The application model stores app-specific state used to describe its interface and
@@ -60,7 +57,6 @@ pub struct Zuul {
 /// Messages emitted by the application and its widgets.
 #[derive(Debug, Clone)]
 pub enum Message {
-    EventOccurred(cosmic::iced::Event),
     External(Event),
     ButtonOkPressed,
     ButtonCancelPressed,
@@ -121,7 +117,7 @@ impl cosmic::Application for Zuul {
     }
 
     fn init(core: cosmic::Core, _flags: Self::Flags) -> (Self, cosmic::app::Task<Self::Message>) {
-        let mut app = Zuul {
+        let app = Zuul {
             window_id: SurfaceId::unique(),
             state: State::Waiting(WaitingState::default()),
             core,
@@ -200,14 +196,14 @@ impl cosmic::Application for Zuul {
                     .max_height(1920.)
                     .into()
             }
-            State::Waiting(state) => unreachable!(),
+            State::Waiting(_) => unreachable!(),
         }
     }
 
     fn update(&mut self, message: Self::Message) -> cosmic::app::Task<Self::Message> {
         use Message::*;
         match &mut self.state {
-            State::Waiting(s) => match message {
+            State::Waiting(_) => match message {
                 External(Event::Bye) => self.exit(),
                 External(Event::Form(form)) => {
                     self.state = State::Display(DisplayState { form, ..Default::default() });
@@ -272,7 +268,7 @@ impl Zuul {
 }
 
 fn subscribe_to_specific_events() -> Subscription<Message> {
-    cosmic::iced::event::listen_raw(|e, status, id| match e {
+    cosmic::iced::event::listen_raw(|e, _status, _id| match e {
 	cosmic::iced::Event::Keyboard(keyboard::Event::KeyPressed { key: Key::Named(Named::Escape), .. }) => Some(Message::Exit),
 	_ => None,
     })
