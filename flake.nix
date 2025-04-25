@@ -57,7 +57,7 @@
       in
         rec {
           overlays.default = final: prev: {
-            zuul = final.callPackage packages.${prev.system};
+            zuul = bin
           };
 
           packages = {
