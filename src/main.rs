@@ -4,6 +4,7 @@ use tracing::info;
 mod app;
 mod config;
 mod error;
+mod form;
 mod i18n;
 mod subscription;
 
@@ -24,7 +25,6 @@ fn main() -> cosmic::iced::Result {
         .client_decorations(true)
         .default_text_size(16.0)
         .no_main_window(true)
-        .exit_on_close(true)
         .debug(true);
 
     // Starts the application's event loop with `()` as the application's flags.
