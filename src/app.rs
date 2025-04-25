@@ -163,7 +163,7 @@ impl cosmic::Application for Zuul {
                 let content = Column::new()
                     .push(prompt)
                     .push(pin)
-                    .push_maybe(description())
+                    .push_maybe(description)
                     .push(vertical_space().height(Length::Fixed(16.)))
 		    .push(actions)
 		    .spacing(space_s);
