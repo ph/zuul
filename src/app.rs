@@ -1,41 +1,32 @@
 // SPDX-License-Identfier: {{ license }}
 
-use crate::config::Config;
 use crate::error::ZuulErr;
-use crate::fl;
-use crate::form::{apply_commands, Form};
+use crate::form::Form;
 use crate::subscription::{read_external_commands_input, Event};
-use assuan::{Command, Response};
-use cosmic::app::{context_drawer, CosmicFlags};
-use cosmic::cosmic_config::{self, CosmicConfigEntry};
+use assuan::Response;
+use cosmic::app::CosmicFlags;
 use cosmic::cosmic_theme::Spacing;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
 use cosmic::iced::platform_specific::shell::commands::{
-    self,
-    activation::request_token,
     layer_surface::{
-        destroy_layer_surface, get_layer_surface, Anchor, KeyboardInteractivity, Layer,
+        get_layer_surface, KeyboardInteractivity, Layer,
     },
 };
-use cosmic::iced::{stream, window, Alignment, Border, Color, Length, Shadow, Subscription};
+use cosmic::iced::{window, Border, Color, Length, Shadow, Subscription};
 use cosmic::iced::keyboard::{self, Key, key::Named};
 use cosmic::iced_runtime::core::layout::Limits;
-use cosmic::iced_runtime::core::window::{Event as WindowEvent, Id as SurfaceId};
+use cosmic::iced_runtime::core::window::Id as SurfaceId;
 use cosmic::iced_runtime::platform_specific::wayland::layer_surface::SctkLayerSurfaceSettings;
 use cosmic::iced_widget::row;
-use cosmic::iced_winit::commands::overlap_notify::overlap_notify;
 use cosmic::prelude::*;
-use cosmic::theme::{self, Button, Container};
+use cosmic::theme::{self, Container};
 use cosmic::widget::{autosize, divider, horizontal_space};
-use cosmic::widget::text::body;
-use cosmic::widget::text_input::StyleSheet;
 use cosmic::widget::{
-    self, column, container, icon, id_container, menu, nav_bar, text_input, vertical_space, Column,
+    container, id_container, text_input, vertical_space, Column,
 };
 use cosmic::widget::{button, text};
-use cosmic::{cosmic_theme, surface};
-use futures_util::{SinkExt, Stream};
+use futures_util::SinkExt;
 use std::io::BufWriter;
 use std::io::Write;
 use std::sync::LazyLock;
@@ -147,11 +138,7 @@ impl cosmic::Application for Zuul {
                     .on_input(Message::OnPassphraseChange)
                     .on_submit(Message::OnPassphraseSubmit);
 
-                let description = if let Some(d) = state.form.description() {
-                    Some(text(d).align_y(Vertical::Center))
-                } else {
-                    None
-                };
+                let description = state.form.description().map(|d| text(d).align_y(Vertical::Center));
 
                 let actions = container(row![
 		    horizontal_space().width(Length::Fill),
