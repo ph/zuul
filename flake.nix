@@ -55,18 +55,17 @@
           inherit cargoArtifacts;
         });
       in
-        with pkgs;
-        {
+        rec {
           overlays.default = (final: prev: {
-            zuul = prev.callPackage packages.${system}.bin;
+            zuul = prev.callPackage packages;
           });
 
           packages = {
-              inherit bin;
-              default = bin;
-            };
+            inherit bin;
+            default = bin;
+          };
 
-          devShells.default = mkShell {
+          devShells.default = pkgs.mkShell {
             inputsFrom = [
               bin
             ];
