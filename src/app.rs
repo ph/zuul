@@ -8,6 +8,7 @@ use crate::subscription::{read_external_commands_input, Event};
 use assuan::{Command, Response};
 use cosmic::app::{context_drawer, CosmicFlags};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
+use cosmic::cosmic_theme::Spacing;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
 use cosmic::iced::platform_specific::shell::commands::{
@@ -138,6 +139,14 @@ impl cosmic::Application for Zuul {
     }
 
     fn view_window(&self, _id: SurfaceId) -> Element<Self::Message> {
+	let Spacing {
+	    space_none,
+	    space_xxs,
+	    space_xs,
+	    space_s,
+	    ..
+	} = theme::active().cosmic().spacing;
+
         match &self.state {
             State::Display(state) => {
                 let prompt = text(state.form.prompt());
@@ -155,11 +164,12 @@ impl cosmic::Application for Zuul {
                 };
 
                 let actions = container(row![
-		    button::custom(text(state.form.button_cancel()))
+		    horizontal_space().width(Length::Fill),
+		    button::standard(state.form.button_cancel())
 			.on_press(Message::ButtonCancelPressed),
-		    horizontal_space(),
-		    button::custom(text(state.form.button_ok())).on_press(Message::ButtonOkPressed),
-		]).align_x(Horizontal::Right);
+		    button::suggested(state.form.button_ok())
+			.on_press(Message::ButtonOkPressed),                            
+		].spacing(space_s)).align_x(Horizontal::Right);
 
                 let content = Column::new()
                     .push(prompt)
@@ -182,7 +192,7 @@ impl cosmic::Application for Zuul {
                         },
                         shadow: Shadow::default(),
                     })))
-                    .padding([24, 24]);
+                    .padding(space_s);
 
                 autosize::autosize(window, AUTOSIZE_ID.clone())
                     .auto_height(true)
