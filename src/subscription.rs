@@ -45,7 +45,7 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
 		    return Ok(())
 		}
 		Command::Bye => {
-		    let _ = output.send(Event::Bye);
+		    let _ = output.send(Event::Bye).await;
 		    return Ok(())
 		}
 		_ => commands.push(command),

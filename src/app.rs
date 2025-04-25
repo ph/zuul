@@ -26,7 +26,6 @@ use cosmic::widget::{
     container, id_container, text_input, vertical_space, Column,
 };
 use cosmic::widget::{button, text};
-use futures_util::SinkExt;
 use std::io::BufWriter;
 use std::io::Write;
 use std::sync::LazyLock;
