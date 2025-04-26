@@ -37,12 +37,16 @@
         nativeBuildInputs = with pkgs; [
           rustToolchain
           pkg-config
-          autoPatchelfHook
         ];
 
         buildInputs = with pkgs; [
           libxkbcommon
+          makeWrapper
+        ];
+
+        runtimeDependencies = with pkgs; [
           wayland
+          wayland-protocols
         ];
 
         commonArgs = {
@@ -50,16 +54,15 @@
         };
 
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-
         bin = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
+          postInstall = ''
+            wrapProgram $out/bin/zuul \
+              --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDependencies}
+          '';
         });
       in
         rec {
-          overlays.default = final: prev: {
-            zuul = bin;
-          };
-
           packages = {
             inherit bin;
             default = bin;
@@ -76,4 +79,8 @@
           };
         }
     );
+
 }
+
+# need to patch elf to wayland
+# https://github.com/NixOS/nixpkgs/pull/390126/files
