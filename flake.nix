@@ -13,7 +13,11 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, nix-filter, crane, rust-overlay,  }:
-    flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (system:
+    {
+      overlays.default = final: prev: {
+        zuul = self.packages.${prev.system}.bin;
+      };
+    } // flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (system:
       let
         overlays = [
           (import rust-overlay)
@@ -60,6 +64,10 @@
             wrapProgram $out/bin/zuul \
               --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDependencies}
           '';
+
+          meta = with pkgs.lib; {
+            mainProgram = "zuul";
+          };
         });
       in
         rec {
@@ -79,7 +87,6 @@
           };
         }
     );
-
 }
 
 # need to patch elf to wayland
