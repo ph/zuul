@@ -52,6 +52,7 @@ pub enum Message {
     OnPassphraseSubmit(String),
     Exit,
     Result(Result<(), ZuulErr>),
+    TogglePassphraseVisibility,
 }
 
 #[derive(Debug, Clone)]
@@ -98,6 +99,7 @@ struct WaitingState {}
 struct DisplayState {
     form: Form,
     passphrase: String,
+    passphrase_is_visible: bool,
 }
 
 impl cosmic::Application for Zuul {
@@ -136,7 +138,7 @@ impl cosmic::Application for Zuul {
             State::Display(state) => {
                 let prompt = text(state.form.prompt());
 
-                let pin = text_input::secure_input("", state.passphrase.clone(), None, true)
+                let pin = text_input::secure_input("", state.passphrase.clone(), Some(Message::TogglePassphraseVisibility), !state.passphrase_is_visible)
                     .id(INPUT_PASSPHRASE_ID.clone())
                     .editing(true)
                     .always_active()
@@ -225,6 +227,9 @@ impl cosmic::Application for Zuul {
                         std::process::exit(exitcode::DATAERR);
                     }
                 },
+		Message::TogglePassphraseVisibility => {
+		    s.passphrase_is_visible = !s.passphrase_is_visible;
+		}
                 _ => {}
             },
         }
