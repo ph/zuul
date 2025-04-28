@@ -43,13 +43,15 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
             info!("command extracted: `{:?}`", command);
 
             match command {
-                Command::Bye => {
+		Command::Bye => {
+                    let _ = output.send(Event::Bye).await;
+                    reply(Response::Ok).await;
+                    return Ok(());
+		}
+                Command::GetPin => {
                     info!("number of commands received: {}", commands.len());
                     let form = apply_commands(&commands);
                     let _ = output.send(Event::Form(form)).await;
-                    reply(Response::Ok).await;
-                    let _ = output.send(Event::Bye).await;
-                    return Ok(());
                 }
                 _ => {
                     commands.push(command);
