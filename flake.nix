@@ -83,7 +83,12 @@
               bin
             ];
 
-            buildInputs = with pkgs; [ goreleaser ] ++ buildInputs;
+            buildInputs = with pkgs; [
+              goreleaser
+              pkgs.rust-analyzer
+              (rustToolchain.override { extensions = [ "rust-src" "rustfmt" "clippy" ]; })
+            ] ++ buildInputs;
+
             XDG_DATA_DIRS = "${cosmic-icons.packages.x86_64-linux.default}/share";
 
             LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath runtimeDependencies;
