@@ -10,9 +10,10 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    cosmic-icons.url = "github:pop-os/cosmic-icons";
   };
 
-  outputs = { self, nixpkgs, flake-utils, nix-filter, crane, rust-overlay,  }:
+  outputs = { self, cosmic-icons, nixpkgs, flake-utils, nix-filter, crane, rust-overlay,  }:
     {
       overlays.default = final: prev: {
         zuul = self.packages.${prev.system}.bin;
@@ -51,6 +52,7 @@
         runtimeDependencies = with pkgs; [
           wayland
           wayland-protocols
+          cosmic-icons.packages.x86_64-linux.default
         ];
 
         commonArgs = {
@@ -82,8 +84,9 @@
             ];
 
             buildInputs = with pkgs; [ goreleaser ] ++ buildInputs;
+            XDG_DATA_DIRS = "${cosmic-icons.packages.x86_64-linux.default}/share";
 
-            LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath buildInputs;
+            LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath runtimeDependencies;
           };
         }
     );
