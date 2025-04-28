@@ -256,11 +256,8 @@ impl Zuul {
         match (self.state.clone(), new_state.clone()) {
             (State::WaitingForm(..), State::Display(..))
             | (State::WaitingValidation, State::Display(..)) => {
-                self.state = new_state;
-                Task::batch(vec![
-                    self.show(),
-                    text_input::focus(INPUT_PASSPHRASE_ID.clone()),
-                ])
+		self.state = new_state;
+		return self.show().chain(text_input::focus(INPUT_PASSPHRASE_ID.clone()));
             }
             (State::Display(s), State::WaitingValidation) => {
                 self.state = new_state;
@@ -281,16 +278,18 @@ impl Zuul {
     }
 
     fn show(&self) -> cosmic::app::Task<Message> {
-        Task::batch(vec![get_layer_surface(SctkLayerSurfaceSettings {
-            id: self.window_id,
-            keyboard_interactivity: KeyboardInteractivity::OnDemand,
-            layer: Layer::Top,
-            namespace: "zuul".into(),
-            size: None,
-            size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
-            exclusive_zone: -1,
-            ..Default::default()
-        })])
+	Task::batch(vec![
+	    get_layer_surface(SctkLayerSurfaceSettings {
+		id: self.window_id,
+		keyboard_interactivity: KeyboardInteractivity::Exclusive,
+		layer: Layer::Top,
+		namespace: "zuul".into(),
+		size: None,
+		size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
+		exclusive_zone: -1,
+		..Default::default()
+	    }),
+	])
     }
 
     fn hide(&self) -> cosmic::app::Task<Message> {
