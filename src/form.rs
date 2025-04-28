@@ -85,7 +85,7 @@ pub fn apply_commands(commands: &[Command]) -> Form {
             Command::SetOk(t) => b.with_button_ok(t),
             Command::SetCancel(t) => b.with_button_cancel(t),
             Command::SetDesc(t) => b.with_description(t),
-            _ => break,
+            _ => continue, // ignore unsupported commands for now.
         };
     }
     b.build()
