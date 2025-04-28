@@ -32,7 +32,7 @@ fn main() -> cosmic::iced::Result {
 }
 
 fn init_logging() {
-    use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+    use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
     let filter_layer = EnvFilter::try_from_default_env().unwrap_or(if cfg!(debug_assertions) {
         EnvFilter::new(format!("warn,{}=debug", env!("CARGO_CRATE_NAME")))

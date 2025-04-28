@@ -2,17 +2,17 @@
 
 use crate::error::ZuulErr;
 use crate::form::Form;
-use crate::subscription::{read_external_commands_input, Event};
+use crate::subscription::{Event, read_external_commands_input};
 use assuan::Response;
 use cosmic::app::CosmicFlags;
 use cosmic::cosmic_theme::Spacing;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
-use cosmic::iced::keyboard::{self, key::Named, Key};
+use cosmic::iced::keyboard::{self, Key, key::Named};
 use cosmic::iced::platform_specific::shell::commands::layer_surface::{
-    get_layer_surface, KeyboardInteractivity, Layer,
+    KeyboardInteractivity, Layer, get_layer_surface,
 };
-use cosmic::iced::{window, Border, Color, Length, Shadow, Subscription};
+use cosmic::iced::{Border, Color, Length, Shadow, Subscription, window};
 use cosmic::iced_runtime::core::layout::Limits;
 use cosmic::iced_runtime::core::window::Id as SurfaceId;
 use cosmic::iced_runtime::platform_specific::wayland::layer_surface::SctkLayerSurfaceSettings;
@@ -20,9 +20,9 @@ use cosmic::iced_widget::row;
 use cosmic::iced_winit::commands::layer_surface::destroy_layer_surface;
 use cosmic::prelude::*;
 use cosmic::theme::{self, Container};
+use cosmic::widget::{Column, container, id_container, text_input, vertical_space};
 use cosmic::widget::{autosize, horizontal_space};
 use cosmic::widget::{button, text};
-use cosmic::widget::{container, id_container, text_input, vertical_space, Column};
 use std::io::BufWriter;
 use std::io::Write;
 use std::sync::LazyLock;
@@ -208,8 +208,10 @@ impl cosmic::Application for Zuul {
             State::WaitingForm(_) | State::WaitingValidation => match message {
                 External(Event::Bye) => self.exit(),
                 External(Event::Form(form)) => {
-                    return self
-                        .transition(State::Display(DisplayState { form, ..Default::default() }));
+                    return self.transition(State::Display(DisplayState {
+                        form,
+                        ..Default::default()
+                    }));
                 }
                 _ => {}
             },

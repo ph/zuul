@@ -1,6 +1,6 @@
 use crate::error::ZuulErr;
-use crate::form::apply_commands;
 use crate::form::Form;
+use crate::form::apply_commands;
 use assuan::{Command, Response};
 use cosmic::iced::stream;
 use futures_util::SinkExt;
