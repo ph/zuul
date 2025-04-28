@@ -38,13 +38,13 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
         reply(Response::OkHello).await;
 
         while let Some(line) = lines.next_line().await? {
-	    info!("line received: `{}`", line);
+            info!("line received: `{}`", line);
             let command = Command::try_from(line)?;
-	    info!("command extracted: `{:?}`", command);
+            info!("command extracted: `{:?}`", command);
 
             match command {
                 Command::Bye => {
-		    info!("number of commands received: {}", commands.len());
+                    info!("number of commands received: {}", commands.len());
                     let form = apply_commands(&commands);
                     let _ = output.send(Event::Form(form)).await;
                     reply(Response::Ok).await;
@@ -52,9 +52,9 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
                     return Ok(());
                 }
                 _ => {
-		    commands.push(command);
-		    reply(Response::Ok).await;
-		}
+                    commands.push(command);
+                    reply(Response::Ok).await;
+                }
             }
         }
 

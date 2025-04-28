@@ -138,12 +138,17 @@ impl cosmic::Application for Zuul {
             State::Display(state) => {
                 let prompt = text(state.form.prompt());
 
-                let pin = text_input::secure_input("", state.passphrase.clone(), Some(Message::TogglePassphraseVisibility), !state.passphrase_is_visible)
-                    .id(INPUT_PASSPHRASE_ID.clone())
-                    .editing(true)
-                    .always_active()
-                    .on_input(Message::OnPassphraseChange)
-                    .on_submit(Message::OnPassphraseSubmit);
+                let pin = text_input::secure_input(
+                    "",
+                    state.passphrase.clone(),
+                    Some(Message::TogglePassphraseVisibility),
+                    !state.passphrase_is_visible,
+                )
+                .id(INPUT_PASSPHRASE_ID.clone())
+                .editing(true)
+                .always_active()
+                .on_input(Message::OnPassphraseChange)
+                .on_submit(Message::OnPassphraseSubmit);
 
                 let description = state
                     .form
@@ -227,9 +232,9 @@ impl cosmic::Application for Zuul {
                         std::process::exit(exitcode::DATAERR);
                     }
                 },
-		Message::TogglePassphraseVisibility => {
-		    s.passphrase_is_visible = !s.passphrase_is_visible;
-		}
+                Message::TogglePassphraseVisibility => {
+                    s.passphrase_is_visible = !s.passphrase_is_visible;
+                }
                 _ => {}
             },
         }
