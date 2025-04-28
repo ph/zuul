@@ -8,6 +8,7 @@ use futures_util::Stream;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::io::{BufReader, BufWriter};
+use tracing::info;
 
 #[derive(Clone, Debug)]
 pub enum Event {
@@ -37,20 +38,23 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
         reply(Response::OkHello).await;
 
         while let Some(line) = lines.next_line().await? {
+	    info!("line received: `{}`", line);
             let command = Command::try_from(line)?;
+	    info!("command extracted: `{:?}`", command);
 
             match command {
-                Command::GetPin => {
+                Command::Bye => {
+		    info!("number of commands received: {}", commands.len());
                     let form = apply_commands(&commands);
-                    commands.clear();
                     let _ = output.send(Event::Form(form)).await;
                     reply(Response::Ok).await;
-                }
-                Command::Bye => {
                     let _ = output.send(Event::Bye).await;
                     return Ok(());
                 }
-                _ => commands.push(command),
+                _ => {
+		    commands.push(command);
+		    reply(Response::Ok).await;
+		}
             }
         }
 
