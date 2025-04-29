@@ -186,6 +186,7 @@ pub enum OptionArgs {
     Owner(String),
     AllowExternalPasswordCache,
     NoGrab,
+    Grab,
 }
 
 impl TryFrom<&str> for OptionArgs {
@@ -221,6 +222,7 @@ impl TryFrom<&str> for OptionArgs {
             ("touch-file", _) => Ok(TouchFile(args.to_owned())),         //test
             ("owner", _) => Ok(Owner(args.to_owned())),                  //test
             ("no-grab", _) => Ok(NoGrab),                                //test
+            ("grab", _) => Ok(Grab),                                     //test
             ("default-prompt", _) => Ok(DefaultPrompt(args.to_owned())),
             ("allow-external-password-cache", "") => Ok(AllowExternalPasswordCache),
             (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),
@@ -524,6 +526,14 @@ mod test {
         assert_eq!(
             Command::Option(OptionArgs::NoGrab),
             Command::try_from("OPTION no-grab").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_option_no_grab() {
+        assert_eq!(
+            Command::Option(OptionArgs::Grab),
+            Command::try_from("OPTION grab").unwrap()
         )
     }
 
