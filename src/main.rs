@@ -28,7 +28,7 @@ fn main() -> cosmic::iced::Result {
         .debug(true);
 
     // Starts the application's event loop with `()` as the application's flags.
-    cosmic::app::run_single_instance::<app::Zuul>(settings, Args {})
+    cosmic::app::run::<app::Zuul>(settings, Args {})
 }
 
 fn init_logging() {
