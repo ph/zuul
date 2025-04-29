@@ -37,10 +37,11 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
 
         reply(Response::OkHello).await;
 
+	// NOTE(ph): add handle bad case.
         while let Some(line) = lines.next_line().await? {
-            info!("line received: `{}`", line);
+            // info!("line received: `{}`", line);
             let command = Command::try_from(line)?;
-            info!("command extracted: `{:?}`", command);
+            // info!("command extracted: `{:?}`", command);
 
             match command {
 		Command::Bye => {
@@ -49,7 +50,6 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
                     return Ok(());
 		}
                 Command::GetPin => {
-                    info!("number of commands received: {}", commands.len());
                     let form = apply_commands(&commands);
                     let _ = output.send(Event::Form(form)).await;
                 }
