@@ -28,11 +28,11 @@ fn main() -> cosmic::iced::Result {
         .debug(true);
 
     // Starts the application's event loop with `()` as the application's flags.
-    cosmic::app::run_single_instance::<app::Zuul>(settings, Args {})
+    cosmic::app::run::<app::Zuul>(settings, Args {})
 }
 
 fn init_logging() {
-    use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+    use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
     let filter_layer = EnvFilter::try_from_default_env().unwrap_or(if cfg!(debug_assertions) {
         EnvFilter::new(format!("warn,{}=debug", env!("CARGO_CRATE_NAME")))

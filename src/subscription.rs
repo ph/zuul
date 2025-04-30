@@ -1,6 +1,6 @@
 use crate::error::ZuulErr;
-use crate::form::apply_commands;
 use crate::form::Form;
+use crate::form::apply_commands;
 use assuan::{Command, Response};
 use cosmic::iced::stream;
 use futures_util::SinkExt;
@@ -8,6 +8,7 @@ use futures_util::Stream;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::io::{BufReader, BufWriter};
+use tracing::info;
 
 #[derive(Clone, Debug)]
 pub enum Event {
@@ -36,21 +37,26 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
 
         reply(Response::OkHello).await;
 
+	// NOTE(ph): add handle bad case.
         while let Some(line) = lines.next_line().await? {
+            // info!("line received: `{}`", line);
             let command = Command::try_from(line)?;
+            // info!("command extracted: `{:?}`", command);
 
             match command {
+		Command::Bye => {
+                    let _ = output.send(Event::Bye).await;
+                    reply(Response::Ok).await;
+                    return Ok(());
+		}
                 Command::GetPin => {
                     let form = apply_commands(&commands);
-                    commands.clear();
                     let _ = output.send(Event::Form(form)).await;
+                }
+                _ => {
+                    commands.push(command);
                     reply(Response::Ok).await;
                 }
-                Command::Bye => {
-                    let _ = output.send(Event::Bye).await;
-                    return Ok(());
-                }
-                _ => commands.push(command),
             }
         }
 
