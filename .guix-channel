@@ -1,9 +1,0 @@
-(channel
-  (version 0)
-  (directory ".guix/modules")
-  (url "https://github.com/ph/zuul.git")
-  (dependencies
-   (channel
-    (name 'guix-rusty)
-    (branch "main")
-    (url "https://github.com/ph/guix-rusty"))))
