@@ -1,11 +1,3 @@
-# SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
-#
-# SPDX-License-Identifier: MIT
-
 /target
 /.direnv/
 result
-# Added by goreleaser init:
-dist/
-.intentionally-empty-file.o
-target/
