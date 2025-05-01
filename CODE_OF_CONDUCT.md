@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+
+SPDX-License-Identifier: MIT
+-->
+
 # Contributor Covenant Code of Conduct
 
 ## Our Pledge

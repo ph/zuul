@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: {{ license }}
-
-//! Provides localization support for this crate.
+// SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+//
+// SPDX-License-Identifier: MIT
 
 use std::sync::LazyLock;
 
