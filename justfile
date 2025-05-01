@@ -1,5 +1,5 @@
-name := '{{ project-name }}'
-appid := '{{ appid }}'
+name := 'zuul'
+appid := 'org.heyk.Zuul'
 rootdir := ''
 prefix := '/usr'
 
@@ -24,6 +24,9 @@ icon-svg-dst := icons-dst / 'scalable' / 'apps' / appid + '.svg'
 
 # Default recipe which runs `just build-release`
 default: build-release
+
+test:
+    cargo test --all
 
 # Runs `cargo clean`
 clean:
