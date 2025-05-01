@@ -4,7 +4,6 @@ use crate::error::ZuulErr;
 use crate::form::Form;
 use crate::subscription::{Event, read_external_commands_input};
 use assuan::Response;
-use cosmic::app::CosmicFlags;
 use cosmic::cosmic_theme::Spacing;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
@@ -53,26 +52,6 @@ pub enum Message {
     TogglePassphraseVisibility,
 }
 
-#[derive(Debug, Clone)]
-pub enum ZuulTasks {
-    Open,
-}
-
-impl std::fmt::Display for ZuulTasks {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ZuulTasks::Open => write!(f, "open"),
-        }
-    }
-}
-
-pub struct Args {}
-
-impl CosmicFlags for Args {
-    type SubCommand = ZuulTasks;
-    type Args = Vec<String>;
-}
-
 #[derive(Clone)]
 enum State {
     WaitingForm(WaitingState),
@@ -102,7 +81,7 @@ struct DisplayState {
 
 impl cosmic::Application for Zuul {
     type Executor = cosmic::executor::single::Executor;
-    type Flags = Args;
+    type Flags = ();
     type Message = Message;
 
     const APP_ID: &'static str = "org.heyk.Zuul";
@@ -201,11 +180,10 @@ impl cosmic::Application for Zuul {
     }
 
     fn update(&mut self, message: Self::Message) -> cosmic::app::Task<Self::Message> {
-        use Message::*;
         match &mut self.state {
             State::WaitingForm(_) | State::WaitingValidation => match message {
-                External(Event::Bye) => self.exit(),
-                External(Event::Form(form)) => {
+                Message::External(Event::Bye) => Self::exit(),
+                Message::External(Event::Form(form)) => {
                     return self.transition(State::Display(DisplayState {
                         form,
                         ..Default::default()
@@ -214,19 +192,19 @@ impl cosmic::Application for Zuul {
                 _ => {}
             },
             State::Display(s) => match message {
-                Message::Exit | ButtonCancelPressed => self.exit(),
-                ButtonOkPressed => {
+                Message::Exit | Message::ButtonCancelPressed => Self::exit(),
+                Message::ButtonOkPressed => {
                     return self.transition(State::WaitingValidation);
                 }
-                OnPassphraseChange(passphrase) => {
+                Message::OnPassphraseChange(passphrase) => {
                     s.passphrase = passphrase;
                 }
-                OnPassphraseSubmit(passphrase) => {
+                Message::OnPassphraseSubmit(passphrase) => {
                     s.passphrase = passphrase;
                     return self.transition(State::WaitingValidation);
                 }
                 Message::Result(r) => match r {
-                    Ok(_) => self.exit(),
+                    Ok(()) => Self::exit(),
                     Err(err) => {
                         error!("Error: {err}");
                         std::process::exit(exitcode::DATAERR);
@@ -235,7 +213,7 @@ impl cosmic::Application for Zuul {
                 Message::TogglePassphraseVisibility => {
                     s.passphrase_is_visible = !s.passphrase_is_visible;
                 }
-                _ => {}
+                Message::External(_) => {}
             },
         }
         Task::none()
@@ -252,10 +230,10 @@ impl cosmic::Application for Zuul {
 impl Zuul {
     fn transition(&mut self, new_state: State) -> cosmic::app::Task<Message> {
         match (self.state.clone(), new_state.clone()) {
-            (State::WaitingForm(..), State::Display(..))
-            | (State::WaitingValidation, State::Display(..)) => {
-		self.state = new_state;
-		return self.show().chain(text_input::focus(INPUT_PASSPHRASE_ID.clone()));
+            (State::WaitingForm(..) | State::WaitingValidation, State::Display(..)) => {
+                self.state = new_state;
+                self.show()
+                    .chain(text_input::focus(INPUT_PASSPHRASE_ID.clone()))
             }
             (State::Display(s), State::WaitingValidation) => {
                 self.state = new_state;
@@ -271,23 +249,21 @@ impl Zuul {
         }
     }
 
-    fn exit(&self) {
+    fn exit() {
         std::process::exit(exitcode::OK);
     }
 
     fn show(&self) -> cosmic::app::Task<Message> {
-	Task::batch(vec![
-	    get_layer_surface(SctkLayerSurfaceSettings {
-		id: self.window_id,
-		keyboard_interactivity: KeyboardInteractivity::Exclusive,
-		layer: Layer::Top,
-		namespace: "zuul".into(),
-		size: None,
-		size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
-		exclusive_zone: -1,
-		..Default::default()
-	    }),
-	])
+        Task::batch(vec![get_layer_surface(SctkLayerSurfaceSettings {
+            id: self.window_id,
+            keyboard_interactivity: KeyboardInteractivity::Exclusive,
+            layer: Layer::Top,
+            namespace: "zuul".into(),
+            size: None,
+            size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
+            exclusive_zone: -1,
+            ..Default::default()
+        })])
     }
 
     fn hide(&self) -> cosmic::app::Task<Message> {
@@ -316,6 +292,7 @@ pub fn subscribe_to_commands() -> Subscription<Message> {
     })
 }
 
+#[allow(clippy::unused_async)]
 async fn reply(responses: Vec<Response>) -> Result<(), ZuulErr> {
     let mut stdout = std::io::stdout();
     let mut w = BufWriter::new(&mut stdout);
