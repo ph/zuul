@@ -25,8 +25,12 @@ icon-svg-dst := icons-dst / 'scalable' / 'apps' / appid + '.svg'
 # Default recipe which runs `just build-release`
 default: build-release
 
+# Test: run the test for the project and local crates.
 test:
     cargo test --all
+
+test-workflow:
+    act -W .github/workflows/test-and-build.yml
 
 # Runs `cargo clean`
 clean:
