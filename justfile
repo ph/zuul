@@ -55,7 +55,7 @@ build-vendored *args: vendor-extract (build-release '--frozen --offline' args)
 
 # Runs a clippy check
 check *args:
-    cargo clippy --all-features {{args}} -- -W clippy::pedantic
+    cargo clippy --all-features {{args}}
     cargo fmt --all --check
 
 # Runs a clippy check with JSON message format
