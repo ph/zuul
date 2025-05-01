@@ -89,6 +89,7 @@
             ];
 
             buildInputs = with pkgs; [
+              pkgs.cargo-deny
               goreleaser
               reuse
               pkgs.rust-analyzer
