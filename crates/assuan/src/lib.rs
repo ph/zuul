@@ -23,19 +23,16 @@ pub enum ParseErr {
 impl std::error::Error for ParseErr {}
 impl std::fmt::Display for ParseErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use ParseErr::*;
-
         match self {
-            UnknownCommand(c) => write!(f, "unknown command with name `{}`", c),
-            StringTooLong(l) => write!(
+            ParseErr::UnknownCommand(c) => write!(f, "unknown command with name `{c}`"),
+            ParseErr::StringTooLong(l) => write!(
                 f,
-                "string too long, limit is {} bytes, received a command of size {}",
-                LINE_LIMITS, l
+                "string too long, limit is {LINE_LIMITS} bytes, received a command of size {l}"
             ),
-            Empty => write!(f, "empty string"),
-            InvalidDuration(s) => write!(f, "invalid duration, error converting `{}`", s),
-            UnknownOption(s) => write!(f, "unknown OPTION named `{}`", s),
-            BadEncoding(s) => write!(f, "bad encoding for `{}`", s),
+            ParseErr::Empty => write!(f, "empty string"),
+            ParseErr::InvalidDuration(s) => write!(f, "invalid duration, error converting `{s}`"),
+            ParseErr::UnknownOption(s) => write!(f, "unknown OPTION named `{s}`"),
+            ParseErr::BadEncoding(s) => write!(f, "bad encoding for `{s}`"),
         }
     }
 }
@@ -68,11 +65,12 @@ impl std::fmt::Display for Response {
 }
 
 impl Response {
+    #[must_use]
     pub fn to_pinentry(&self) -> String {
         match self {
             Response::Ok => "OK".to_string(),
             Response::OkHello => "OK Please go ahead".to_string(),
-            Response::Data(d) => format!("D {}", d), // This is need to be escaped
+            Response::Data(d) => format!("D {d}"), // This is need to be escaped
         }
     }
 }
@@ -204,33 +202,33 @@ impl TryFrom<&str> for OptionArgs {
             None => (value, ""),
         };
 
-        use OptionArgs::*;
-
         match (option, args) {
-            ("constraints-enforce", "") => Ok(ConstraintsEnforce),
-            ("constraints-hint-short", _) => Ok(ConstraintsHintShort(args.to_owned())),
-            ("constraints-hint-long", _) => Ok(ConstraintsHintLong(args.to_owned())),
-            ("formatted-passphrase", "") => Ok(FormattedPassphrase),
-            ("formatted-passphrase-hint", _) => Ok(FormattedPassphraseHint(args.to_owned())),
-            ("ttyname", _) => Ok(TtyName(args.to_owned())),
-            ("ttytype", _) => Ok(TtyType(args.to_owned())),
-            ("lc-ctype", _) => Ok(LcCType(args.to_owned())),
-            ("lc-messages", _) => Ok(LcMessages(args.to_owned())), //test
-            ("default-ok", _) => Ok(DefaultOk(args.to_owned())),
-            ("default-cancel", _) => Ok(DefaultCancel(args.to_owned())), //test
-            ("default-yes", _) => Ok(DefaultYes(args.to_owned())),       //test
-            ("default-no", _) => Ok(DefaultNo(args.to_owned())),         //test
-            ("default-pwmngr", _) => Ok(DefaultPwmngr(args.to_owned())), //test
-            ("default-cf-visi", _) => Ok(DefaultCFVisi(args.to_owned())), //test
-            ("default-tt-visi", _) => Ok(DefaultTTVisi(args.to_owned())), //test
-            ("default-tt-hide", _) => Ok(DefaultTTHide(args.to_owned())), //test
-            ("default-capshint", _) => Ok(DefaultCapsHint(args.to_owned())), //test
-            ("touch-file", _) => Ok(TouchFile(args.to_owned())),         //test
-            ("owner", _) => Ok(Owner(args.to_owned())),                  //test
-            ("no-grab", _) => Ok(NoGrab),                                //test
-            ("grab", _) => Ok(Grab),                                     //test
-            ("default-prompt", _) => Ok(DefaultPrompt(args.to_owned())),
-            ("allow-external-password-cache", "") => Ok(AllowExternalPasswordCache),
+            ("constraints-enforce", "") => Ok(OptionArgs::ConstraintsEnforce),
+            ("constraints-hint-short", _) => Ok(OptionArgs::ConstraintsHintShort(args.to_owned())),
+            ("constraints-hint-long", _) => Ok(OptionArgs::ConstraintsHintLong(args.to_owned())),
+            ("formatted-passphrase", "") => Ok(OptionArgs::FormattedPassphrase),
+            ("formatted-passphrase-hint", _) => {
+                Ok(OptionArgs::FormattedPassphraseHint(args.to_owned()))
+            }
+            ("ttyname", _) => Ok(OptionArgs::TtyName(args.to_owned())),
+            ("ttytype", _) => Ok(OptionArgs::TtyType(args.to_owned())),
+            ("lc-ctype", _) => Ok(OptionArgs::LcCType(args.to_owned())),
+            ("lc-messages", _) => Ok(OptionArgs::LcMessages(args.to_owned())), //test
+            ("default-ok", _) => Ok(OptionArgs::DefaultOk(args.to_owned())),
+            ("default-cancel", _) => Ok(OptionArgs::DefaultCancel(args.to_owned())), //test
+            ("default-yes", _) => Ok(OptionArgs::DefaultYes(args.to_owned())),       //test
+            ("default-no", _) => Ok(OptionArgs::DefaultNo(args.to_owned())),         //test
+            ("default-pwmngr", _) => Ok(OptionArgs::DefaultPwmngr(args.to_owned())), //test
+            ("default-cf-visi", _) => Ok(OptionArgs::DefaultCFVisi(args.to_owned())), //test
+            ("default-tt-visi", _) => Ok(OptionArgs::DefaultTTVisi(args.to_owned())), //test
+            ("default-tt-hide", _) => Ok(OptionArgs::DefaultTTHide(args.to_owned())), //test
+            ("default-capshint", _) => Ok(OptionArgs::DefaultCapsHint(args.to_owned())), //test
+            ("touch-file", _) => Ok(OptionArgs::TouchFile(args.to_owned())),         //test
+            ("owner", _) => Ok(OptionArgs::Owner(args.to_owned())),                  //test
+            ("no-grab", _) => Ok(OptionArgs::NoGrab),                                //test
+            ("grab", _) => Ok(OptionArgs::Grab),                                     //test
+            ("default-prompt", _) => Ok(OptionArgs::DefaultPrompt(args.to_owned())),
+            ("allow-external-password-cache", "") => Ok(OptionArgs::AllowExternalPasswordCache),
             (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),
         }
     }
