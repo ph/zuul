@@ -237,7 +237,7 @@ impl TryFrom<&str> for OptionArgs {
 }
 
 fn decode_message(s: &str) -> Result<String, ParseErr> {
-    decode(&s).map_err(|_| ParseErr::BadEncoding(s.to_owned()))
+    decode(s).map_err(|_| ParseErr::BadEncoding(s.to_owned()))
 }
 
 #[cfg(test)]

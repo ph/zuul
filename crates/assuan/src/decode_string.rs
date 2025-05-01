@@ -23,7 +23,7 @@ pub fn decode(s: &str) -> Result<String, DecodingErr> {
 
 pub struct Decoder<'a>(std::str::Chars<'a>);
 
-impl<'a> Iterator for Decoder<'a> {
+impl Iterator for Decoder<'_> {
     type Item = Result<char, DecodingErr>;
 
     // NOTES(ph): Initially I was trying to return a Cow, but since I am decoding all the chars,
@@ -32,8 +32,8 @@ impl<'a> Iterator for Decoder<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.next() {
             Some('%') => match (
-                self.0.next().map(|v| v.to_digit(16)).flatten(),
-                self.0.next().map(|v| v.to_digit(16)).flatten(),
+                self.0.next().and_then(|v| v.to_digit(16)),
+                self.0.next().and_then(|v| v.to_digit(16)),
             ) {
                 (Some(a), Some(b)) => Some(char::from_u32((a << 4) | b).ok_or(DecodingErr)),
                 _ => Some(Err(DecodingErr)),

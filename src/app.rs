@@ -4,7 +4,6 @@ use crate::error::ZuulErr;
 use crate::form::Form;
 use crate::subscription::{Event, read_external_commands_input};
 use assuan::Response;
-use cosmic::app::CosmicFlags;
 use cosmic::cosmic_theme::Spacing;
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::id::Id;
@@ -53,26 +52,6 @@ pub enum Message {
     TogglePassphraseVisibility,
 }
 
-#[derive(Debug, Clone)]
-pub enum ZuulTasks {
-    Open,
-}
-
-impl std::fmt::Display for ZuulTasks {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ZuulTasks::Open => write!(f, "open"),
-        }
-    }
-}
-
-pub struct Args {}
-
-impl CosmicFlags for Args {
-    type SubCommand = ZuulTasks;
-    type Args = Vec<String>;
-}
-
 #[derive(Clone)]
 enum State {
     WaitingForm(WaitingState),
@@ -102,7 +81,7 @@ struct DisplayState {
 
 impl cosmic::Application for Zuul {
     type Executor = cosmic::executor::single::Executor;
-    type Flags = Args;
+    type Flags = ();
     type Message = Message;
 
     const APP_ID: &'static str = "org.heyk.Zuul";
@@ -255,7 +234,7 @@ impl Zuul {
             (State::WaitingForm(..), State::Display(..))
             | (State::WaitingValidation, State::Display(..)) => {
 		self.state = new_state;
-		return self.show().chain(text_input::focus(INPUT_PASSPHRASE_ID.clone()));
+		self.show().chain(text_input::focus(INPUT_PASSPHRASE_ID.clone()))
             }
             (State::Display(s), State::WaitingValidation) => {
                 self.state = new_state;

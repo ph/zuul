@@ -1,4 +1,3 @@
-use app::Args;
 use tracing::info;
 
 mod app;
@@ -28,7 +27,7 @@ fn main() -> cosmic::iced::Result {
         .debug(true);
 
     // Starts the application's event loop with `()` as the application's flags.
-    cosmic::app::run::<app::Zuul>(settings, Args {})
+    cosmic::app::run::<app::Zuul>(settings, ())
 }
 
 fn init_logging() {
