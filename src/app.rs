@@ -32,8 +32,6 @@ static AUTOSIZE_ID: LazyLock<Id> = LazyLock::new(|| Id::new("autosize"));
 static MAIN_ID: LazyLock<Id> = LazyLock::new(|| Id::new("main"));
 static INPUT_PASSPHRASE_ID: LazyLock<Id> = LazyLock::new(|| Id::new("input_passphrase"));
 
-const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
-
 /// The application model stores app-specific state used to describe its interface and
 /// drive its logic.
 pub struct Zuul {
