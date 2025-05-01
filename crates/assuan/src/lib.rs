@@ -4,6 +4,10 @@
 
 use std::time::Duration;
 
+use decode_string::decode;
+
+mod decode_string;
+
 const LINE_LIMITS: usize = 1000;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -13,6 +17,7 @@ pub enum ParseErr {
     Empty,
     InvalidDuration(String),
     UnknownOption(String),
+    BadEncoding(String),
 }
 
 impl std::error::Error for ParseErr {}
@@ -30,6 +35,7 @@ impl std::fmt::Display for ParseErr {
             Empty => write!(f, "empty string"),
             InvalidDuration(s) => write!(f, "invalid duration, error converting `{}`", s),
             UnknownOption(s) => write!(f, "unknown OPTION named `{}`", s),
+            BadEncoding(s) => write!(f, "bad encoding for `{}`", s),
         }
     }
 }
@@ -134,7 +140,7 @@ impl TryFrom<String> for Command {
             "BYE" => Ok(Command::Bye),
             "RESET" => Ok(Command::Reset),
             "SETTITLE" => Ok(Command::SetTitle(remainder.to_owned())),
-            "SETDESC" => Ok(Command::SetDesc(remainder.to_owned())),
+            "SETDESC" => Ok(Command::SetDesc(decode_message(remainder)?)),
             "SETPROMPT" => Ok(Command::SetPrompt(remainder.to_owned())),
             "SETOK" => Ok(Command::SetOk(remainder.to_owned())),
             "SETCANCEL" => Ok(Command::SetCancel(remainder.to_owned())),
@@ -228,6 +234,10 @@ impl TryFrom<&str> for OptionArgs {
             (_, _) => Err(ParseErr::UnknownOption(value.to_owned())),
         }
     }
+}
+
+fn decode_message(s: &str) -> Result<String, ParseErr> {
+    decode(&s).map_err(|_| ParseErr::BadEncoding(s.to_owned()))
 }
 
 #[cfg(test)]
@@ -530,7 +540,7 @@ mod test {
     }
 
     #[test]
-    fn parse_option_no_grab() {
+    fn parse_option_grab() {
         assert_eq!(
             Command::Option(OptionArgs::Grab),
             Command::try_from("OPTION grab").unwrap()
@@ -570,6 +580,14 @@ mod test {
         assert_eq!(
             Command::SetGenPinTT("Hello".to_string()),
             Command::try_from("SETGENPIN_TT Hello").unwrap()
+        )
+    }
+
+    #[test]
+    fn parse_encoded_description() {
+        assert_eq!(
+            Command::SetDesc("Hello%world".to_string()),
+            Command::try_from("SETDESC Hello%25world").unwrap()
         )
     }
 }
