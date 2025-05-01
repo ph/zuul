@@ -292,6 +292,7 @@ pub fn subscribe_to_commands() -> Subscription<Message> {
     })
 }
 
+#[allow(clippy::unused_async)]
 async fn reply(responses: Vec<Response>) -> Result<(), ZuulErr> {
     let mut stdout = std::io::stdout();
     let mut w = BufWriter::new(&mut stdout);
