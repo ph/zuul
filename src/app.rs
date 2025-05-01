@@ -182,7 +182,7 @@ impl cosmic::Application for Zuul {
     fn update(&mut self, message: Self::Message) -> cosmic::app::Task<Self::Message> {
         match &mut self.state {
             State::WaitingForm(_) | State::WaitingValidation => match message {
-                Message::External(Event::Bye) => self.exit(),
+                Message::External(Event::Bye) => Self::exit(),
                 Message::External(Event::Form(form)) => {
                     return self.transition(State::Display(DisplayState {
                         form,
@@ -192,7 +192,7 @@ impl cosmic::Application for Zuul {
                 _ => {}
             },
             State::Display(s) => match message {
-                Message::Exit | Message::ButtonCancelPressed => self.exit(),
+                Message::Exit | Message::ButtonCancelPressed => Self::exit(),
                 Message::ButtonOkPressed => {
                     return self.transition(State::WaitingValidation);
                 }
@@ -204,7 +204,7 @@ impl cosmic::Application for Zuul {
                     return self.transition(State::WaitingValidation);
                 }
                 Message::Result(r) => match r {
-                    Ok(_) => self.exit(),
+                    Ok(()) => Self::exit(),
                     Err(err) => {
                         error!("Error: {err}");
                         std::process::exit(exitcode::DATAERR);
@@ -230,8 +230,7 @@ impl cosmic::Application for Zuul {
 impl Zuul {
     fn transition(&mut self, new_state: State) -> cosmic::app::Task<Message> {
         match (self.state.clone(), new_state.clone()) {
-            (State::WaitingForm(..), State::Display(..))
-            | (State::WaitingValidation, State::Display(..)) => {
+            (State::WaitingForm(..) | State::WaitingValidation, State::Display(..)) => {
                 self.state = new_state;
                 self.show()
                     .chain(text_input::focus(INPUT_PASSPHRASE_ID.clone()))
@@ -250,7 +249,7 @@ impl Zuul {
         }
     }
 
-    fn exit(&self) {
+    fn exit() {
         std::process::exit(exitcode::OK);
     }
 

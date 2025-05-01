@@ -13,8 +13,8 @@ impl std::error::Error for ZuulErr {}
 impl std::fmt::Display for ZuulErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ZuulErr::Input(e) => write!(f, "error `{}` while reading stdin input", e),
-            ZuulErr::Parsing(e) => write!(f, "error `{}` while parsing pinentry commands", e),
+            ZuulErr::Input(e) => write!(f, "error `{e}` while reading stdin input"),
+            ZuulErr::Parsing(e) => write!(f, "error `{e}` while parsing pinentry commands"),
             ZuulErr::Output => write!(f, "todo output"),
         }
     }
