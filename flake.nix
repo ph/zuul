@@ -85,6 +85,7 @@
             ];
 
             buildInputs = with pkgs; [
+              pkgs.cargo-deny
               goreleaser
               pkgs.rust-analyzer
               (rustToolchain.override { extensions = [ "rust-src" "rustfmt" "clippy" ]; })
