@@ -8,7 +8,6 @@ use futures_util::Stream;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::io::{BufReader, BufWriter};
-use tracing::info;
 
 #[derive(Clone, Debug)]
 pub enum Event {

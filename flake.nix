@@ -42,6 +42,7 @@
         nativeBuildInputs = with pkgs; [
           rustToolchain
           pkg-config
+          just
         ];
 
         buildInputs = with pkgs; [
@@ -87,6 +88,7 @@
               goreleaser
               pkgs.rust-analyzer
               (rustToolchain.override { extensions = [ "rust-src" "rustfmt" "clippy" ]; })
+              act
             ] ++ buildInputs;
 
             XDG_DATA_DIRS = "${cosmic-icons.packages.x86_64-linux.default}/share";
