@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+#
+# SPDX-License-Identifier: MIT
+
 {
   description = "Pinentry application for the COSMIC desktop environment";
 
@@ -86,6 +90,7 @@
 
             buildInputs = with pkgs; [
               goreleaser
+              reuse
               pkgs.rust-analyzer
               (rustToolchain.override { extensions = [ "rust-src" "rustfmt" "clippy" ]; })
               act

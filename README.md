@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+
+SPDX-License-Identifier: MIT
+-->
+
 # COSMIC Application Template
 
 A template for developing applications for the COSMIC™ desktop environment using [libcosmic][libcosmic].

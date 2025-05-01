@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+#
+# SPDX-License-Identifier: MIT
+
 name := 'zuul'
 appid := 'org.heyk.Zuul'
 rootdir := ''
@@ -52,6 +56,10 @@ build-release *args: (build-debug '--release' args)
 
 # Compiles release profile with vendored dependencies
 build-vendored *args: vendor-extract (build-release '--frozen --offline' args)
+
+# License: use reuse to check for license compliance.
+license:
+    reuse lint
 
 # Runs a clippy check
 check *args:

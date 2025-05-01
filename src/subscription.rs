@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 Pier-Hugues Pellerin <ph@heykimo.com>
+//
+// SPDX-License-Identifier: MIT
+
 use crate::error::ZuulErr;
 use crate::form::Form;
 use crate::form::apply_commands;
