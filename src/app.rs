@@ -134,7 +134,7 @@ impl cosmic::Application for Zuul {
                 let description = state
                     .form
                     .description()
-                    .map(|d| text(d).align_y(Vertical::Center));
+                    .map(|d| text::caption(d).align_y(Vertical::Center));
 
                 let actions = container(
                     row![
