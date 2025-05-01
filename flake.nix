@@ -91,6 +91,7 @@
             buildInputs = with pkgs; [
               goreleaser
               reuse
+              git-cliff
               pkgs.rust-analyzer
               (rustToolchain.override { extensions = [ "rust-src" "rustfmt" "clippy" ]; })
               act
