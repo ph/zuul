@@ -180,11 +180,10 @@ impl cosmic::Application for Zuul {
     }
 
     fn update(&mut self, message: Self::Message) -> cosmic::app::Task<Self::Message> {
-        use Message::*;
         match &mut self.state {
             State::WaitingForm(_) | State::WaitingValidation => match message {
-                External(Event::Bye) => self.exit(),
-                External(Event::Form(form)) => {
+                Message::External(Event::Bye) => self.exit(),
+                Message::External(Event::Form(form)) => {
                     return self.transition(State::Display(DisplayState {
                         form,
                         ..Default::default()
@@ -193,14 +192,14 @@ impl cosmic::Application for Zuul {
                 _ => {}
             },
             State::Display(s) => match message {
-                Message::Exit | ButtonCancelPressed => self.exit(),
-                ButtonOkPressed => {
+                Message::Exit | Message::ButtonCancelPressed => self.exit(),
+                Message::ButtonOkPressed => {
                     return self.transition(State::WaitingValidation);
                 }
-                OnPassphraseChange(passphrase) => {
+                Message::OnPassphraseChange(passphrase) => {
                     s.passphrase = passphrase;
                 }
-                OnPassphraseSubmit(passphrase) => {
+                Message::OnPassphraseSubmit(passphrase) => {
                     s.passphrase = passphrase;
                     return self.transition(State::WaitingValidation);
                 }
@@ -214,7 +213,7 @@ impl cosmic::Application for Zuul {
                 Message::TogglePassphraseVisibility => {
                     s.passphrase_is_visible = !s.passphrase_is_visible;
                 }
-                _ => {}
+                Message::External(_) => {}
             },
         }
         Task::none()
