@@ -36,18 +36,18 @@ pub fn read_external_commands_input() -> impl Stream<Item = Result<Event, ZuulEr
 
         reply(Response::OkHello).await;
 
-	// NOTE(ph): add handle bad case.
+        // NOTE(ph): add handle bad case.
         while let Some(line) = lines.next_line().await? {
             // info!("line received: `{}`", line);
             let command = Command::try_from(line)?;
             // info!("command extracted: `{:?}`", command);
 
             match command {
-		Command::Bye => {
+                Command::Bye => {
                     let _ = output.send(Event::Bye).await;
                     reply(Response::Ok).await;
                     return Ok(());
-		}
+                }
                 Command::GetPin => {
                     let form = apply_commands(&commands);
                     let _ = output.send(Event::Form(form)).await;
