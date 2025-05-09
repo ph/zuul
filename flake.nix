@@ -43,6 +43,8 @@
           ];
         };
 
+        cosmic = cosmic-icons.packages.x86_64-linux.default;
+
         nativeBuildInputs = with pkgs; [
           rustToolchain
           pkg-config
@@ -57,19 +59,20 @@
         runtimeDependencies = with pkgs; [
           wayland
           wayland-protocols
-          cosmic-icons.packages.x86_64-linux.default
         ];
 
         commonArgs = {
           inherit src buildInputs nativeBuildInputs;
         };
 
+
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
         bin = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
           postInstall = ''
             wrapProgram $out/bin/zuul \
-              --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDependencies}
+              --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDependencies} \
+              --prefix XDG_DATA_DIRS : "${cosmic}/share"
           '';
 
           meta = with pkgs.lib; {
